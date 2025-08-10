@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shugur Infrastructure Network</title>
+    <meta name="description" content="Distributed infrastructure monitoring and control center for Shugur Network.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#36BA98',
+                        dark: '#1A1A1A',
+                        lightbg: '#FAFAFA'
+                    },
+                    fontFamily: {
+                        display: ['League Spartan', 'ui-sans-serif', 'system-ui'],
+                        body: ['Roboto', 'ui-sans-serif', 'system-ui']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Roboto', ui-sans-serif, system-ui; }
+        h1, h2, h3 { font-family: 'League Spartan', ui-sans-serif, system-ui; }
+        .pulse-green { animation: pulse-green 2s infinite; }
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-dark text-white min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-display text-xl">Shugur Network</h1>
+                    <div class="text-xs text-gray-400">Infrastructure Control Center</div>
+                </div>
+            </div>
+            <nav class="flex gap-6 text-sm">
+                <a href="https://developers.shugur.net" class="hover:text-primary">Developer Hub</a>
+                <a href="https://shugur.com" class="hover:text-primary">Company</a>
+                <a href="https://status.shugur.net" class="hover:text-primary">Status</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Status Overview -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-display mb-6">Network Status</h2>
+            <div class="grid md:grid-cols-4 gap-4">
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold">shu01.shugur.net</h3>
+                        <div class="w-3 h-3 bg-green-500 rounded-full pulse-green"></div>
+                    </div>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <div>Status: <span class="text-green-400">Online</span></div>
+                        <div>Load: <span class="text-blue-400">23%</span></div>
+                        <div>Connections: <span class="text-yellow-400">142</span></div>
+                        <div class="font-mono text-xs">US-East-1</div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold">shu02.shugur.net</h3>
+                        <div class="w-3 h-3 bg-green-500 rounded-full pulse-green"></div>
+                    </div>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <div>Status: <span class="text-green-400">Online</span></div>
+                        <div>Load: <span class="text-blue-400">18%</span></div>
+                        <div>Connections: <span class="text-yellow-400">98</span></div>
+                        <div class="font-mono text-xs">US-West-1</div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold">shu03.shugur.net</h3>
+                        <div class="w-3 h-3 bg-green-500 rounded-full pulse-green"></div>
+                    </div>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <div>Status: <span class="text-green-400">Online</span></div>
+                        <div>Load: <span class="text-blue-400">31%</span></div>
+                        <div>Connections: <span class="text-yellow-400">203</span></div>
+                        <div class="font-mono text-xs">EU-Central-1</div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold">shu04.shugur.net</h3>
+                        <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    </div>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <div>Status: <span class="text-yellow-400">Maintenance</span></div>
+                        <div>Load: <span class="text-gray-500">0%</span></div>
+                        <div>Connections: <span class="text-gray-500">0</span></div>
+                        <div class="font-mono text-xs">Asia-Pacific-1</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network Overview -->
+        <div class="grid lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+                <h3 class="font-display text-lg mb-4">Network Performance</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">Total Active Connections</span>
+                        <span class="text-primary font-mono">443</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">Messages/sec</span>
+                        <span class="text-green-400 font-mono">1,247</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">Average Latency</span>
+                        <span class="text-blue-400 font-mono">23ms</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">Uptime (30d)</span>
+                        <span class="text-yellow-400 font-mono">99.94%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+                <h3 class="font-display text-lg mb-4">Load Balancer</h3>
+                <div class="space-y-3">
+                    <div class="text-sm text-gray-400 mb-2">Primary Endpoint</div>
+                    <div class="font-mono text-primary bg-gray-800 px-3 py-2 rounded text-sm">
+                        wss://relay.shugur.net
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        Automatically routes to healthy nodes:<br>
+                        shu01, shu02, shu03 (shu04 in maintenance)
+                    </div>
+                    <div class="pt-2">
+                        <div class="text-xs text-gray-400 mb-1">Traffic Distribution</div>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <div class="w-20 bg-gray-800 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: 32%"></div>
+                                </div>
+                                <span class="text-xs">shu01: 32%</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-20 bg-gray-800 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" style="width: 22%"></div>
+                                </div>
+                                <span class="text-xs">shu02: 22%</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-20 bg-gray-800 rounded-full h-2">
+                                    <div class="bg-purple-500 h-2 rounded-full" style="width: 46%"></div>
+                                </div>
+                                <span class="text-xs">shu03: 46%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mb-8">
+            <h3 class="font-display text-lg mb-4">Quick Access</h3>
+            <div class="grid md:grid-cols-3 gap-4">
+                <a href="https://developers.shugur.net" 
+                   class="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-primary transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                        </svg>
+                        <div>
+                            <div class="font-semibold group-hover:text-primary">Developer Hub</div>
+                            <div class="text-xs text-gray-400">APIs, docs, tools</div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://status.shugur.net" 
+                   class="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-primary transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <div>
+                            <div class="font-semibold group-hover:text-primary">Status Page</div>
+                            <div class="text-xs text-gray-400">Incidents, uptime</div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://docs.relay.shugur.net" 
+                   class="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-primary transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        <div>
+                            <div class="font-semibold group-hover:text-primary">Documentation</div>
+                            <div class="text-xs text-gray-400">Guides, API reference</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Connection Instructions -->
+        <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+            <h3 class="font-display text-lg mb-4">Connect to Network</h3>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-semibold mb-2 text-sm">Primary Endpoint (Load Balanced)</h4>
+                    <div class="bg-gray-800 rounded px-3 py-2 font-mono text-sm text-primary mb-2">
+                        wss://relay.shugur.net
+                    </div>
+                    <p class="text-xs text-gray-400">Automatically routes to the best available node</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-2 text-sm">Direct Node Access</h4>
+                    <div class="space-y-1 text-xs font-mono">
+                        <div class="text-green-400">wss://shu01.shugur.net (US-East)</div>
+                        <div class="text-green-400">wss://shu02.shugur.net (US-West)</div>
+                        <div class="text-green-400">wss://shu03.shugur.net (EU-Central)</div>
+                        <div class="text-gray-500">wss://shu04.shugur.net (AP-Southeast) - Maintenance</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 mt-12">
+        <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between text-sm text-gray-400">
+            <div>© 2025 Shugur Network. Distributed infrastructure for open protocols.</div>
+            <div class="flex gap-4">
+                <a href="https://shugur.com" class="hover:text-primary">Company</a>
+                <a href="https://github.com/Shugur-Network" class="hover:text-primary">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Auto-refresh status every 30 seconds
+        // setInterval(() => {
+        //     // In production, this would fetch real status data
+        //     console.log('Refreshing node status...');
+        // }, 30000);
+    </script>
+</body>
+</html>
