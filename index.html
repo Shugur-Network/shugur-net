@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shugur Infrastructure Network</title>
+    <title>Shugur Relay Network                        <div class="text-center mt-4">
+                            <span class="text-primary font-mono text-lg" data-metric="nips-count">25</span>
+                            <div class="text-xs text-gray-400">Total Supported</div>
+                        </div>tle>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <meta name="description" content="Distributed infrastructure monitoring and control center for Shugur Network.">
+    <meta name="description" content="Distributed Nostr relay network providing censorship-resistant communication infrastructure with high performance and reliability.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
@@ -48,8 +51,8 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="font-display text-xl">Shugur Network</h1>
-                    <div class="text-xs text-gray-400">Infrastructure Control Center</div>
+                    <h1 class="font-display text-xl">Shugur Relay Network</h1>
+                    <div class="text-xs text-gray-400">Distributed Nostr Infrastructure</div>
                 </div>
             </div>
             <nav class="flex gap-6 text-sm">
@@ -61,20 +64,33 @@
     </header>
 
     <div class="max-w-7xl mx-auto px-6 py-8">
-        <!-- Status Overview -->
+        <!-- Distributed Relay Network Status -->
         <div class="mb-8">
-            <h2 class="text-2xl font-display mb-6">Network Status</h2>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-display">Distributed Nostr Relay Network</h2>
+                <button id="refresh-btn" class="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded text-sm flex items-center gap-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
             <div class="grid md:grid-cols-4 gap-4">
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4" data-node="shu01">
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="font-semibold">shu01.shugur.net</h3>
                         <div class="w-3 h-3 bg-green-500 rounded-full pulse-green"></div>
                     </div>
                     <div class="text-xs text-gray-400 space-y-1">
-                        <div>Status: <span class="text-green-400">Online</span></div>
-                        <div>Load: <span class="text-blue-400">23%</span></div>
-                        <div>Connections: <span class="text-yellow-400">142</span></div>
-                        <div class="font-mono text-xs">US-East-1</div>
+                        <div>Status: <span class="text-green-400" data-node-status>Online</span></div>
+                        <div>Events: <span class="text-blue-400" data-node-events>2.1M</span></div>
+                        <div>Connections: <span class="text-yellow-400" data-node-connections>142</span></div>
+                        <div>NIPs: <span class="text-purple-400">25</span></div>
+                        <div class="font-mono text-xs">US-East-1 • CockroachDB</div>
+                        <div class="text-xs">
+                            <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                            wss://shu01.shugur.net
+                        </div>
                     </div>
                 </div>
 
@@ -85,9 +101,14 @@
                     </div>
                     <div class="text-xs text-gray-400 space-y-1">
                         <div>Status: <span class="text-green-400">Online</span></div>
-                        <div>Load: <span class="text-blue-400">18%</span></div>
+                        <div>Events: <span class="text-blue-400">1.8M</span></div>
                         <div>Connections: <span class="text-yellow-400">98</span></div>
-                        <div class="font-mono text-xs">US-West-1</div>
+                        <div>NIPs: <span class="text-purple-400">25</span></div>
+                        <div class="font-mono text-xs">US-West-1 • CockroachDB</div>
+                        <div class="text-xs">
+                            <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                            wss://shu02.shugur.net
+                        </div>
                     </div>
                 </div>
 
@@ -98,9 +119,14 @@
                     </div>
                     <div class="text-xs text-gray-400 space-y-1">
                         <div>Status: <span class="text-green-400">Online</span></div>
-                        <div>Load: <span class="text-blue-400">31%</span></div>
+                        <div>Events: <span class="text-blue-400">2.3M</span></div>
                         <div>Connections: <span class="text-yellow-400">203</span></div>
-                        <div class="font-mono text-xs">EU-Central-1</div>
+                        <div>NIPs: <span class="text-purple-400">25</span></div>
+                        <div class="font-mono text-xs">EU-Central-1 • CockroachDB</div>
+                        <div class="text-xs">
+                            <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                            wss://shu03.shugur.net
+                        </div>
                     </div>
                 </div>
 
@@ -111,9 +137,125 @@
                     </div>
                     <div class="text-xs text-gray-400 space-y-1">
                         <div>Status: <span class="text-yellow-400">Maintenance</span></div>
-                        <div>Load: <span class="text-gray-500">0%</span></div>
+                        <div>Events: <span class="text-gray-500">0</span></div>
                         <div>Connections: <span class="text-gray-500">0</span></div>
-                        <div class="font-mono text-xs">Asia-Pacific-1</div>
+                        <div>NIPs: <span class="text-gray-500">--</span></div>
+                        <div class="font-mono text-xs">Asia-Pacific-1 • CockroachDB</div>
+                        <div class="text-xs">
+                            <span class="inline-block w-2 h-2 bg-gray-500 rounded-full mr-1"></span>
+                            wss://shu04.shugur.net
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nostr Protocol Information -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-display mb-6">Nostr Protocol Support</h2>
+            <div class="grid lg:grid-cols-3 gap-6">
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+                    <h3 class="font-display text-lg mb-4 flex items-center">
+                        <svg class="h-5 w-5 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Supported NIPs
+                    </h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Core Protocol (NIP-01)</span>
+                            <span class="text-green-400">✓</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Contact Lists (NIP-02)</span>
+                            <span class="text-green-400">✓</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Encrypted DMs (NIP-04/17)</span>
+                            <span class="text-green-400">✓</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Event Deletion (NIP-09)</span>
+                            <span class="text-green-400">✓</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Search Capability (NIP-50)</span>
+                            <span class="text-green-400">✓</span>
+                        </div>
+                        <div class="text-center mt-4">
+                            <span class="text-primary font-mono text-lg">25 NIPs</span>
+                            <div class="text-xs text-gray-400">Total Supported</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+                    <h3 class="font-display text-lg mb-4 flex items-center">
+                        <svg class="h-5 w-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                        Relay Limits
+                    </h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Max Message Length</span>
+                            <span class="text-blue-400">2048 chars</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Max Subscriptions</span>
+                            <span class="text-blue-400">100</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Max Event Tags</span>
+                            <span class="text-blue-400">100</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Auth Required</span>
+                            <span class="text-gray-400">No</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Payment Required</span>
+                            <span class="text-gray-400">No</span>
+                        </div>
+                        <div class="text-center mt-4">
+                            <span class="text-green-400 font-mono text-lg">Free</span>
+                            <div class="text-xs text-gray-400">Public Access</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+                    <h3 class="font-display text-lg mb-4 flex items-center">
+                        <svg class="h-5 w-5 text-purple-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Performance
+                    </h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Software</span>
+                            <span class="text-purple-400" data-metric="software">Shugur v2.0.0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Language</span>
+                            <span class="text-purple-400">Go</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Database</span>
+                            <span class="text-purple-400">CockroachDB</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Rate Limiting</span>
+                            <span class="text-green-400">Enabled</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Clustering</span>
+                            <span class="text-green-400">Distributed</span>
+                        </div>
+                        <div class="text-center mt-4">
+                            <span class="text-yellow-400 font-mono text-lg">< 100ms</span>
+                            <div class="text-xs text-gray-400">Avg Response</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -124,22 +266,30 @@
             <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
                 <h3 class="font-display text-lg mb-4">Network Performance</h3>
                 <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Total Active Connections</span>
-                        <span class="text-primary font-mono">443</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Messages/sec</span>
-                        <span class="text-green-400 font-mono">1,247</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Average Latency</span>
-                        <span class="text-blue-400 font-mono">23ms</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Uptime (30d)</span>
-                        <span class="text-yellow-400 font-mono">99.94%</span>
-                    </div>
+                                            <div class="flex justify-between items-center">
+                            <span class="text-sm">Total WebSocket Connections</span>
+                            <span class="text-primary font-mono" data-metric="ws-connections">443</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Events Processed/sec</span>
+                            <span class="text-green-400 font-mono" data-metric="events-per-second">1,247</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Total Stored Events</span>
+                            <span class="text-blue-400 font-mono" data-metric="total-events">6.2M</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Average Response Time</span>
+                            <span class="text-yellow-400 font-mono" data-metric="response-time">23ms</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Network Uptime (30d)</span>
+                            <span class="text-green-400 font-mono" data-metric="uptime">99.94%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Database Sync Status</span>
+                            <span class="text-green-400 font-mono" data-metric="db-sync">Synced</span>
+                        </div>
                 </div>
             </div>
 
@@ -177,6 +327,43 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Event Statistics -->
+        <div class="mb-8">
+            <h3 class="font-display text-lg mb-4">Real-time Event Activity</h3>
+            <div class="grid md:grid-cols-6 gap-4">
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-mono text-primary mb-1" data-event-kind="1">1,247</div>
+                    <div class="text-xs text-gray-400">Kind 1 (Notes)</div>
+                    <div class="text-xs text-green-400">+12/min</div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-mono text-blue-400 mb-1" data-event-kind="3">342</div>
+                    <div class="text-xs text-gray-400">Kind 3 (Contacts)</div>
+                    <div class="text-xs text-green-400">+3/min</div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-mono text-purple-400 mb-1" data-event-kind="4">89</div>
+                    <div class="text-xs text-gray-400">Kind 4 (DMs)</div>
+                    <div class="text-xs text-green-400">+8/min</div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-mono text-yellow-400 mb-1" data-event-kind="7">156</div>
+                    <div class="text-xs text-gray-400">Kind 7 (Reactions)</div>
+                    <div class="text-xs text-green-400">+15/min</div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-mono text-green-400 mb-1" data-event-kind="30023">23</div>
+                    <div class="text-xs text-gray-400">Kind 30023 (Articles)</div>
+                    <div class="text-xs text-green-400">+1/min</div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-mono text-red-400 mb-1" data-event-kind="other">7</div>
+                    <div class="text-xs text-gray-400">Other Kinds</div>
+                    <div class="text-xs text-green-400">+2/min</div>
                 </div>
             </div>
         </div>
@@ -228,46 +415,150 @@
 
         <!-- Connection Instructions -->
         <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
-            <h3 class="font-display text-lg mb-4">Connect to Network</h3>
+            <h3 class="font-display text-lg mb-4">Connect to Shugur Relay Network</h3>
             <div class="grid md:grid-cols-2 gap-6">
                 <div>
-                    <h4 class="font-semibold mb-2 text-sm">Primary Endpoint (Load Balanced)</h4>
+                    <h4 class="font-semibold mb-2 text-sm flex items-center">
+                        <svg class="h-4 w-4 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Primary Endpoint (Load Balanced)
+                    </h4>
                     <div class="bg-gray-800 rounded px-3 py-2 font-mono text-sm text-primary mb-2">
                         wss://relay.shugur.net
                     </div>
-                    <p class="text-xs text-gray-400">Automatically routes to the best available node</p>
+                    <p class="text-xs text-gray-400 mb-3">Automatically routes to the best available node with intelligent failover.</p>
+                    
+                    <h4 class="font-semibold mb-2 text-sm">Features</h4>
+                    <div class="space-y-1 text-xs">
+                        <div class="flex items-center">
+                            <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            25 supported NIPs
+                        </div>
+                        <div class="flex items-center">
+                            <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            CockroachDB distributed storage
+                        </div>
+                        <div class="flex items-center">
+                            <span class="inline-block w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                            Real-time event streaming
+                        </div>
+                        <div class="flex items-center">
+                            <span class="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                            Rate limiting & abuse protection
+                        </div>
+                    </div>
                 </div>
                 
                 <div>
-                    <h4 class="font-semibold mb-2 text-sm">Direct Node Access</h4>
+                    <h4 class="font-semibold mb-2 text-sm flex items-center">
+                        <svg class="h-4 w-4 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                        </svg>
+                        Direct Node Access
+                    </h4>
                     <div class="space-y-1 text-xs font-mono">
-                        <div class="text-green-400">wss://shu01.shugur.net (US-East)</div>
-                        <div class="text-green-400">wss://shu02.shugur.net (US-West)</div>
-                        <div class="text-green-400">wss://shu03.shugur.net (EU-Central)</div>
-                        <div class="text-gray-500">wss://shu04.shugur.net (AP-Southeast) - Maintenance</div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-green-400">wss://shu01.shugur.net</span>
+                            <span class="text-gray-400">US-East</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-green-400">wss://shu02.shugur.net</span>
+                            <span class="text-gray-400">US-West</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-green-400">wss://shu03.shugur.net</span>
+                            <span class="text-gray-400">EU-Central</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-500">wss://shu04.shugur.net</span>
+                            <span class="text-yellow-400">Maintenance</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-gray-800 rounded text-xs">
+                        <div class="font-semibold mb-2 text-primary">Relay Information (NIP-11)</div>
+                        <div class="space-y-1 font-mono">
+                            <div>Name: shugur-relay</div>
+                            <div>Software: shugur v2.0.0</div>
+                            <div>Contact: support@shugur.com</div>
+                            <div>Pubkey: npub1...</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="border-t border-gray-800 mt-12">
         <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between text-sm text-gray-400">
-            <div>© 2025 Shugur Network. Distributed infrastructure for open protocols.</div>
+            <div>© 2025 Shugur Network. Building censorship-resistant communication infrastructure.</div>
             <div class="flex gap-4">
+                <a href="https://github.com/Shugur-Network/relay" class="hover:text-primary">GitHub</a>
+                <a href="https://docs.relay.shugur.net" class="hover:text-primary">Docs</a>
                 <a href="https://shugur.com" class="hover:text-primary">Company</a>
-                <a href="https://github.com/Shugur-Network" class="hover:text-primary">GitHub</a>
+                <a href="https://nostr.com" class="hover:text-primary">About Nostr</a>
             </div>
         </div>
     </footer>
 
+    <script src="dashboard.js"></script>
     <script>
+        // Legacy fallback - this will be replaced by dashboard.js
         // Auto-refresh status every 30 seconds
-        // setInterval(() => {
-        //     // In production, this would fetch real status data
-        //     console.log('Refreshing node status...');
-        // }, 30000);
+        setInterval(() => {
+            // Simulate real-time updates
+            updateEventCounters();
+            updateConnectionCounts();
+            console.log('Refreshing relay status...');
+        }, 30000);
+
+        function updateEventCounters() {
+            // Simulate incrementing event counters
+            const counters = document.querySelectorAll('.text-2xl.font-mono');
+            counters.forEach(counter => {
+                if (counter.textContent && !isNaN(parseInt(counter.textContent.replace(/,/g, '')))) {
+                    let current = parseInt(counter.textContent.replace(/,/g, ''));
+                    let increment = Math.floor(Math.random() * 5) + 1;
+                    counter.textContent = (current + increment).toLocaleString();
+                }
+            });
+        }
+
+        function updateConnectionCounts() {
+            // Simulate small fluctuations in connection counts
+            const connectionElements = document.querySelectorAll('[class*="text-yellow-400"]');
+            connectionElements.forEach(element => {
+                if (element.textContent && !isNaN(parseInt(element.textContent))) {
+                    let current = parseInt(element.textContent);
+                    let change = Math.floor(Math.random() * 10) - 5; // -5 to +5
+                    let newValue = Math.max(0, current + change);
+                    element.textContent = newValue.toString();
+                }
+            });
+        }
+
+        // Add copy to clipboard functionality for relay URLs
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                console.log('Copied to clipboard:', text);
+                // Show toast notification (you could add a toast component)
+            });
+        }
+
+        // Add click handlers for relay URLs
+        document.addEventListener('DOMContentLoaded', function() {
+            const relayUrls = document.querySelectorAll('.font-mono');
+            relayUrls.forEach(url => {
+                if (url.textContent.startsWith('wss://')) {
+                    url.style.cursor = 'pointer';
+                    url.title = 'Click to copy';
+                    url.addEventListener('click', () => {
+                        copyToClipboard(url.textContent);
+                    });
+                }
+            });
+        });
     </script>
 </body>
 </html>

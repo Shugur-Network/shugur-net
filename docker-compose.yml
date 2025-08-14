@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  shugur-dashboard:
+    build: .
+    ports:
+      - "8000:80"
+    restart: unless-stopped
+    container_name: shugur-net-dashboard
+    environment:
+      - NGINX_HOST=shugur.net
+      - NGINX_PORT=80

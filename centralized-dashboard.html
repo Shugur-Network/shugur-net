@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shugur Relay Network - Distributed Infrastructure Dashboard</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <meta name="description" content="Centralized dashboard for Shugur's distributed Nostr relay network - real-time monitoring of all relay nodes across multiple regions.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#36BA98',
+                        dark: '#1A1A1A',
+                        lightbg: '#FAFAFA'
+                    },
+                    fontFamily: {
+                        display: ['League Spartan', 'ui-sans-serif', 'system-ui'],
+                        body: ['Roboto', 'ui-sans-serif', 'system-ui']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Roboto', ui-sans-serif, system-ui; }
+        h1, h2, h3 { font-family: 'League Spartan', ui-sans-serif, system-ui; }
+        .pulse-green { animation: pulse-green 2s infinite; }
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-dark text-white min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-display text-xl">Shugur Relay Network</h1>
+                    <div class="text-xs text-gray-400">Distributed Nostr Infrastructure Dashboard</div>
+                </div>
+            </div>
+            <nav class="flex gap-6 text-sm">
+                <a href="https://developers.shugur.net" class="hover:text-primary">Developer Hub</a>
+                <a href="https://relay.shugur.net" class="hover:text-primary">Load Balancer</a>
+                <a href="https://shugur.com" class="hover:text-primary">Company</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Network Overview -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-display">Network Overview</h2>
+                <button id="refresh-btn" class="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded text-sm flex items-center gap-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh All
+                </button>
+            </div>
+            
+            <!-- Global Statistics -->
+            <div class="grid md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 text-center">
+                    <div class="text-3xl font-mono text-primary mb-2" id="total-connections">--</div>
+                    <div class="text-sm text-gray-400">Total Connections</div>
+                    <div class="text-xs text-blue-400 mt-1">All Nodes</div>
+                </div>
+                
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 text-center">
+                    <div class="text-3xl font-mono text-green-400 mb-2" id="total-messages">--</div>
+                    <div class="text-sm text-gray-400">Messages Processed</div>
+                    <div class="text-xs text-purple-400 mt-1">Network Total</div>
+                </div>
+                
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 text-center">
+                    <div class="text-3xl font-mono text-blue-400 mb-2" id="total-events">--</div>
+                    <div class="text-sm text-gray-400">Events Stored</div>
+                    <div class="text-xs text-yellow-400 mt-1">Distributed DB</div>
+                </div>
+                
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <div class="w-3 h-3 bg-green-500 rounded-full pulse-green" id="health-dot"></div>
+                        <div class="text-3xl font-mono text-green-400" id="network-health">--</div>
+                    </div>
+                    <div class="text-sm text-gray-400">Network Health</div>
+                    <div class="text-xs text-green-400 mt-1" id="online-nodes">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Relay Nodes -->
+        <div class="mb-8">
+            <h3 class="text-xl font-display mb-6">Relay Nodes Status</h3>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- shu01 Node -->
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4" data-node="shu01">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-sm">shu01.shugur.net</h4>
+                        <div class="w-3 h-3 bg-gray-500 rounded-full status-dot"></div>
+                    </div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Status:</span>
+                            <span class="text-gray-400 node-status">Connecting...</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Region:</span>
+                            <span class="text-blue-400">US-East-1</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Connections:</span>
+                            <span class="text-yellow-400 node-connections">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Events:</span>
+                            <span class="text-purple-400 node-events">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Uptime:</span>
+                            <span class="text-green-400 node-uptime">--</span>
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-gray-700">
+                            <div class="text-xs font-mono text-primary cursor-pointer relay-url" title="Click to copy">
+                                wss://shu01.shugur.net
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- shu02 Node -->
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4" data-node="shu02">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-sm">shu02.shugur.net</h4>
+                        <div class="w-3 h-3 bg-gray-500 rounded-full status-dot"></div>
+                    </div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Status:</span>
+                            <span class="text-gray-400 node-status">Connecting...</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Region:</span>
+                            <span class="text-blue-400">US-West-1</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Connections:</span>
+                            <span class="text-yellow-400 node-connections">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Events:</span>
+                            <span class="text-purple-400 node-events">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Uptime:</span>
+                            <span class="text-green-400 node-uptime">--</span>
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-gray-700">
+                            <div class="text-xs font-mono text-primary cursor-pointer relay-url" title="Click to copy">
+                                wss://shu02.shugur.net
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- shu03 Node -->
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4" data-node="shu03">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-sm">shu03.shugur.net</h4>
+                        <div class="w-3 h-3 bg-gray-500 rounded-full status-dot"></div>
+                    </div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Status:</span>
+                            <span class="text-gray-400 node-status">Connecting...</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Region:</span>
+                            <span class="text-blue-400">EU-Central-1</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Connections:</span>
+                            <span class="text-yellow-400 node-connections">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Events:</span>
+                            <span class="text-purple-400 node-events">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Uptime:</span>
+                            <span class="text-green-400 node-uptime">--</span>
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-gray-700">
+                            <div class="text-xs font-mono text-primary cursor-pointer relay-url" title="Click to copy">
+                                wss://shu03.shugur.net
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- shu04 Node -->
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4" data-node="shu04">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-sm">shu04.shugur.net</h4>
+                        <div class="w-3 h-3 bg-gray-500 rounded-full status-dot"></div>
+                    </div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Status:</span>
+                            <span class="text-gray-400 node-status">Connecting...</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Region:</span>
+                            <span class="text-blue-400">Asia-Pacific-1</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Connections:</span>
+                            <span class="text-yellow-400 node-connections">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Events:</span>
+                            <span class="text-purple-400 node-events">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Uptime:</span>
+                            <span class="text-green-400 node-uptime">--</span>
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-gray-700">
+                            <div class="text-xs font-mono text-primary cursor-pointer relay-url" title="Click to copy">
+                                wss://shu04.shugur.net
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network Connection Info -->
+        <div class="grid lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+                <h3 class="font-display text-lg mb-4">Load Balanced Access</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-gray-400 mb-2">Primary Endpoint</div>
+                        <div class="bg-gray-800 rounded px-3 py-2 font-mono text-sm text-primary cursor-pointer relay-url" title="Click to copy">
+                            wss://relay.shugur.net
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">Automatically routes to healthy nodes</div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-sm text-gray-400 mb-2">Backup Endpoint</div>
+                        <div class="bg-gray-800 rounded px-3 py-2 font-mono text-sm text-blue-400 cursor-pointer relay-url" title="Click to copy">
+                            wss://backup.shugur.net
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">Failover load balancer</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+                <h3 class="font-display text-lg mb-4">Network Features</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span>25 supported NIPs (Nostr Improvement Proposals)</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>CockroachDB distributed storage</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span>Global geographic distribution</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <span>Intelligent load balancing</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span>Real-time event synchronization</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+            <h3 class="font-display text-lg mb-4">Resources</h3>
+            <div class="grid md:grid-cols-4 gap-4 text-sm">
+                <a href="https://docs.relay.shugur.net" class="flex items-center gap-2 text-blue-400 hover:text-blue-300">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    Documentation
+                </a>
+                <a href="https://developers.shugur.net" class="flex items-center gap-2 text-green-400 hover:text-green-300">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                    </svg>
+                    Developer Hub
+                </a>
+                <a href="https://status.shugur.net" class="flex items-center gap-2 text-yellow-400 hover:text-yellow-300">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Status Page
+                </a>
+                <a href="https://github.com/Shugur-Network/relay" class="flex items-center gap-2 text-purple-400 hover:text-purple-300">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                    Source Code
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 mt-12">
+        <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between text-sm text-gray-400">
+            <div>© 2025 Shugur Network. Building censorship-resistant communication infrastructure for the Nostr ecosystem.</div>
+            <div class="flex gap-4">
+                <a href="https://nostr.com" class="hover:text-primary">About Nostr</a>
+                <a href="https://shugur.com" class="hover:text-primary">Company</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="simple-dashboard.js"></script>
+</body>
+</html>
