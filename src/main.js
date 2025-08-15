@@ -8,7 +8,6 @@ Chart.register(...registerables)
 
 // Quick connectivity test
 async function testRelayConnectivity(relays) {
-    console.log('Testing relay connectivity...')
     const results = await Promise.allSettled(
         relays.map(async (relay) => {
             try {
@@ -23,13 +22,6 @@ async function testRelayConnectivity(relays) {
             }
         })
     )
-    
-    results.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-            const { relay, available, status, error } = result.value
-            console.log(`${relay.name}: ${available ? `✅ Available (${status})` : `❌ Not available (${error})`}`)
-        }
-    })
     
     return results.filter(r => r.status === 'fulfilled' && r.value.available).map(r => r.value.relay)
 }
@@ -76,14 +68,11 @@ let state = {
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('Dashboard initialization started...')
-    
     // Set dynamic year
     document.getElementById('current-year').textContent = new Date().getFullYear()
     
     // Set a maximum loading time of 8 seconds
     const maxLoadingTime = setTimeout(() => {
-        console.log('Maximum loading time reached, forcing dashboard display')
         document.getElementById('loading-screen').classList.add('hidden')
         document.getElementById('dashboard').classList.remove('hidden')
         document.getElementById('dashboard').classList.add('show')
@@ -93,12 +82,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         initializeEventListeners()
         initializeCharts()
         
-        console.log('Starting relay nodes initialization...')
         await initializeRelayNodes()
-        console.log('Relay nodes initialization completed')
         
         startDataCollection()
-        console.log('Data collection started')
         
         // Clear the timeout since we succeeded
         clearTimeout(maxLoadingTime)
@@ -107,7 +93,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('loading-screen').classList.add('hidden')
         document.getElementById('dashboard').classList.remove('hidden')
         document.getElementById('dashboard').classList.add('show')
-        console.log('Dashboard is now visible')
         
     } catch (error) {
         console.error('Dashboard initialization failed:', error)
@@ -115,7 +100,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         clearTimeout(maxLoadingTime)
         // Show dashboard anyway with fallback
         ALL_RELAY_NODES = [...SEED_RELAYS]
-        console.log('Using fallback to seed relays only')
         
         // Initialize with fallback data
         for (const node of SEED_RELAYS) {
@@ -136,7 +120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('loading-screen').classList.add('hidden')
         document.getElementById('dashboard').classList.remove('hidden')
         document.getElementById('dashboard').classList.add('show')
-        console.log('Dashboard shown with fallback configuration')
     }
 })
 
@@ -287,16 +270,15 @@ async function initializeRelayNodes() {
     const container = document.getElementById('relay-nodes')
     
     try {
-        // Test which relays are available
-        const testRelays = [LOCAL_RELAY, ...SEED_RELAYS]
+        // Test which relays are available (only include localhost in development)
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        const testRelays = isLocalhost ? [LOCAL_RELAY, ...SEED_RELAYS] : [...SEED_RELAYS]
         const availableRelays = await testRelayConnectivity(testRelays)
         
         if (availableRelays.length > 0) {
-            console.log(`Found ${availableRelays.length} available relays`)
             // Only use seed relays for initial setup - cluster discovery will add others
             ALL_RELAY_NODES = availableRelays.filter(relay => relay.isSeed && !relay.isLocal)
         } else {
-            console.log('No relays responding, using seed relays anyway')
             ALL_RELAY_NODES = [...SEED_RELAYS]
         }
         
@@ -309,7 +291,6 @@ async function initializeRelayNodes() {
             // Remove all existing relay elements to prevent duplicates
             const existingElements = container.querySelectorAll('[id^="relay-"]')
             existingElements.forEach(element => element.remove())
-            console.log(`Cleaned up ${existingElements.length} existing relay elements`)
         }
         
         // Initialize UI for all discovered nodes
@@ -318,7 +299,6 @@ async function initializeRelayNodes() {
             try {
                 // Skip if we've already processed this node
                 if (processedNodes.has(node.id) || processedNodes.has(node.name)) {
-                    console.log(`Skipping duplicate node: ${node.id} (${node.name})`)
                     continue
                 }
                 processedNodes.add(node.id)
@@ -327,7 +307,6 @@ async function initializeRelayNodes() {
                 // Check if UI element already exists
                 const existingElement = document.getElementById(`relay-${node.id}`)
                 if (existingElement) {
-                    console.log(`UI element already exists for ${node.id}, skipping`)
                     continue
                 }
                 
@@ -335,7 +314,6 @@ async function initializeRelayNodes() {
                 let location = node.location // Use existing location if already set
                 
                 if (!location) {
-                    console.log(`Getting location for node ${node.id} (${node.name})`)
                     // Skip IP location for localhost
                     if (node.isLocal) {
                         location = 'Local Development'
@@ -344,14 +322,12 @@ async function initializeRelayNodes() {
                         const hostname = node.apiUrl.replace('https://', '').replace('http://', '')
                         try {
                             location = await getIPLocation(hostname)
-                            console.log(`Got location for ${node.id}: ${location}`)
                         } catch (error) {
-                            console.warn(`IP geolocation failed for ${hostname}, using fallback`)
                             location = detectRelayLocation(hostname)
                         }
                     }
                 } else {
-                    console.log(`Using existing location for ${node.id}: ${location}`)
+                    // Using existing location
                 }
                 
                 // Ensure location is set on the node object
@@ -375,13 +351,10 @@ async function initializeRelayNodes() {
             }
         }
         
-        console.log(`Initialized ${ALL_RELAY_NODES.length} relay nodes in UI`)
-        
     } catch (error) {
         console.error('Failed to initialize relay nodes:', error)
         
         // Fallback: use seed relays only
-        console.log('Using fallback initialization with seed relays only')
         ALL_RELAY_NODES = [...SEED_RELAYS]
         
         for (const node of SEED_RELAYS) {
@@ -476,9 +449,8 @@ function startDataCollection() {
     
     // Re-discover cluster topology every 5 minutes to catch new nodes
     setInterval(() => {
-        console.log('Checking for cluster topology changes...')
         discoverClusterNodes().then(() => {
-            console.log('Cluster topology check complete')
+            // Topology check complete
         }).catch(error => {
             console.warn('Failed to check cluster topology:', error)
         })
@@ -486,13 +458,10 @@ function startDataCollection() {
 }
 
 function updateDashboardData() {
-    console.log('🔄 Dashboard data update started at', new Date().toLocaleTimeString())
-    
     // Properly handle async operation
     fetchRelayData().then(() => {
         updateNetworkOverview()
         updateLastUpdatedTime()
-        console.log('✅ Dashboard data update completed')
     }).catch(error => {
         console.error('❌ Dashboard data update failed:', error)
     })
@@ -943,7 +912,7 @@ async function discoverClusterNodes() {
                     newlyDiscoveredNodes.push(newNode)
                 }
             } else {
-                console.log(`Skipping duplicate discovered node: ${hostname} (already exists as ${existingNode.id})`)
+                // Skip duplicate - already exists
             }
         }
     }
@@ -1061,15 +1030,15 @@ function detectRelayLocation(hostname) {
     // Enhanced location detection based on hostname
     const hostLower = hostname.toLowerCase()
     
-    // Check for shugur network nodes
-    if (hostLower.includes('shu01')) return 'US East (Primary)'
-    if (hostLower.includes('shu02')) return 'US West (Secondary)' 
-    if (hostLower.includes('shu03')) return 'EU Central (Tertiary)'
-    if (hostLower.includes('shu04')) return 'Asia Pacific (Quaternary)'
-    if (hostLower.includes('shu05')) return 'Australia (Node 5)'
-    if (hostLower.includes('shu06')) return 'South America (Node 6)'
-    if (hostLower.includes('shu07')) return 'Africa (Node 7)'
-    if (hostLower.includes('shu08')) return 'Middle East (Node 8)'
+    // Check for shugur network nodes - city, country format only
+    if (hostLower.includes('shu01')) return 'New York, United States'
+    if (hostLower.includes('shu02')) return 'Los Angeles, United States' 
+    if (hostLower.includes('shu03')) return 'Frankfurt, Germany'
+    if (hostLower.includes('shu04')) return 'Singapore, Singapore'
+    if (hostLower.includes('shu05')) return 'Sydney, Australia'
+    if (hostLower.includes('shu06')) return 'São Paulo, Brazil'
+    if (hostLower.includes('shu07')) return 'Cape Town, South Africa'
+    if (hostLower.includes('shu08')) return 'Dubai, UAE'
     
     // For any other shuXX pattern
     const shuMatch = hostLower.match(/shu(\d+)/)
@@ -1100,10 +1069,10 @@ const locationCache = new Map()
 // Function to resolve FQDN to IP address
 async function resolveHostnameToIP(hostname) {
     try {
-        // Use Netlify function for DNS resolution (solves CORS)
-        const response = await fetch(`/.netlify/functions/dns-resolve?hostname=${hostname}`, {
+        // Use a DNS resolution service that supports CORS
+        const response = await fetch(`https://dns.google/resolve?name=${hostname}&type=A`, {
             headers: { 'Accept': 'application/json' },
-            signal: AbortSignal.timeout(8000)
+            signal: AbortSignal.timeout(5000)
         })
         
         if (!response.ok) {
@@ -1112,13 +1081,16 @@ async function resolveHostnameToIP(hostname) {
         
         const data = await response.json()
         
-        if (data.success && data.ip) {
-            console.log(`Resolved ${hostname} to ${data.ip}`)
-            return data.ip
-        } else {
-            console.warn(`DNS resolution failed for ${hostname}, using hostname as fallback`)
-            return hostname
+        if (data.Answer && data.Answer.length > 0) {
+            // Return the first A record
+            const ipAddress = data.Answer.find(record => record.type === 1)?.data
+            if (ipAddress) {
+                console.log(`Resolved ${hostname} to ${ipAddress}`)
+                return ipAddress
+            }
         }
+        
+        throw new Error('No A record found')
         
     } catch (error) {
         console.warn(`Failed to resolve ${hostname} to IP:`, error.message)
@@ -1147,34 +1119,34 @@ async function getIPLocation(hostname) {
         
         console.log(`Getting location for IP: ${ipAddress}`)
         
-        // Use Netlify function to proxy geolocation request (solves CORS)
-        const response = await fetch(`/.netlify/functions/geolocation?ip=${ipAddress}`, {
+        // Try ipapi.co first (free tier: 1000 requests/month)
+        const response = await fetch(`https://ipapi.co/${ipAddress}/json/`, {
             headers: { 'Accept': 'application/json' },
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(5000)
         })
         
         if (!response.ok) {
-            throw new Error(`Netlify function error: ${response.status}`)
+            throw new Error(`HTTP error! status: ${response.status}`)
         }
         
         const data = await response.json()
-        console.log(`Netlify geolocation response for ${ipAddress}:`, data)
+        console.log(`Location API response for ${ipAddress}:`, data)
         
-        if (data.error && !data.fallback) {
-            throw new Error(data.error)
+        if (data.error) {
+            throw new Error(data.reason || 'Location lookup failed')
         }
         
-        if (data.location) {
-            const location = data.location
-            console.log(`✅ Got real location for ${hostname}: ${location} (via ${data.source})`)
-            
-            // Cache the result
-            locationCache.set(hostname, location)
-            return location
-        } else {
-            // API returned fallback signal
-            throw new Error('Geolocation APIs failed, using fallback')
-        }
+        // Format the location nicely - city and country only
+        const parts = []
+        if (data.city) parts.push(data.city)
+        if (data.country_name) parts.push(data.country_name)
+        
+        const location = parts.length > 0 ? parts.join(', ') : 'Unknown Location'
+        
+        // Cache the result
+        locationCache.set(hostname, location)
+        
+        return location
         
     } catch (error) {
         console.warn(`Failed to get location for ${hostname}:`, error.message)
@@ -1305,7 +1277,12 @@ function updateFooterRelayList() {
     
     if (!container) return
     
-    const relayArray = Array.from(state.relays.values())
+    // Use the same order as the tiles by following ALL_RELAY_NODES order
+    const relayArray = ALL_RELAY_NODES.map(node => {
+        const relay = state.relays.get(node.id)
+        return relay || node
+    }).filter(relay => relay) // Remove any undefined entries
+    
     const maxFooterRelays = 4
     const displayedRelays = relayArray.slice(0, maxFooterRelays)
     

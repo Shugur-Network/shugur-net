@@ -45,7 +45,6 @@ exports.handler = async (event, context) => {
           if (data.error) throw new Error(data.reason || 'ipapi.co error')
           const parts = []
           if (data.city) parts.push(data.city)
-          if (data.region && data.region !== data.city) parts.push(data.region)
           if (data.country_name) parts.push(data.country_name)
           return parts.length > 0 ? parts.join(', ') : null
         }
@@ -57,7 +56,6 @@ exports.handler = async (event, context) => {
           if (data.status === 'fail') throw new Error(data.message || 'ip-api.com error')
           const parts = []
           if (data.city) parts.push(data.city)
-          if (data.regionName && data.regionName !== data.city) parts.push(data.regionName)
           if (data.country) parts.push(data.country)
           return parts.length > 0 ? parts.join(', ') : null
         }
@@ -69,7 +67,6 @@ exports.handler = async (event, context) => {
           if (data.error) throw new Error(data.error.message || 'ipinfo.io error')
           const parts = []
           if (data.city) parts.push(data.city)
-          if (data.region && data.region !== data.city) parts.push(data.region)
           if (data.country) parts.push(data.country)
           return parts.length > 0 ? parts.join(', ') : null
         }
@@ -79,8 +76,6 @@ exports.handler = async (event, context) => {
     // Try each API until one works
     for (const api of geoAPIs) {
       try {
-        console.log(`Trying ${api.name} for IP: ${ip}`)
-        
         const response = await fetch(api.url, {
           headers: { 'Accept': 'application/json' },
           signal: AbortSignal.timeout(8000)
@@ -94,7 +89,6 @@ exports.handler = async (event, context) => {
         const location = api.formatResponse(data)
         
         if (location) {
-          console.log(`✅ ${api.name} succeeded: ${location}`)
           return {
             statusCode: 200,
             headers,
@@ -107,7 +101,6 @@ exports.handler = async (event, context) => {
         }
         
       } catch (error) {
-        console.warn(`❌ ${api.name} failed:`, error.message)
         // Continue to next API
       }
     }

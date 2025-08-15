@@ -1,20 +1,21 @@
-````markdown
 # Shugur Network Dashboard
 
-An enterprise-grade monitoring dashboard for the Shugur relay network cluster. Built with modern web technologies and designed for real-time monitoring of NOSTR relay performance.
+An enterprise-grade monitoring dashboard for the Shugur relay network cluster. Built with modern web technologies and designed for real-time monitoring of NOSTR relay performance with automatic updates and location detection.
 
 ## 🚀 Features
 
-- **Real-time Monitoring**: Live updates of relay status, connections, and performance metrics
+- **Real-time Monitoring**: Live updates of relay status, connections, and performance metrics with 5-second auto-refresh
+- **Intelligent Location Detection**: Browser-based geolocation with fallback to IP-based location services
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
 - **Dark/Light Theme**: Toggle between themes with persistent preference storage
 - **Interactive Charts**: Real-time data visualization with Chart.js
 - **Network Overview**: Comprehensive cluster health monitoring
 - **Event Logging**: Recent network events and activity tracking
-- **Auto-refresh**: Configurable automatic data updates
+- **Auto-refresh**: Automatic data updates every 5 seconds with pause/resume functionality
 - **Performance Metrics**: Response times, uptime, connection counts, and load monitoring
-- **Cluster Discovery**: Automatic detection of relay nodes in the network
-- **Error Handling**: Robust error handling and fallback mechanisms
+- **Cluster Discovery**: Automatic detection and scaling of relay nodes in the network
+- **Production-Ready**: CORS-aware deployment with environment detection
+- **Clean Logging**: Minimal debugging output in production for optimal performance
 
 ## 🏗️ Architecture
 
@@ -32,7 +33,18 @@ Visit the live dashboard at: [https://shugur.net](https://shugur.net)
 
 ## ⚡ Performance Optimizations
 
-### Version 2.0.0 Improvements
+### Version 2.1.0 Improvements (Latest)
+
+- **Auto-Refresh Dashboard**: 5-second automatic updates with pause/resume functionality
+- **Intelligent Location Detection**: Browser geolocation with IP-based fallback for CORS-free operation
+- **Production Environment Detection**: Automatic localhost exclusion in production deployments
+- **Clean Console Output**: Minimal debugging logs for optimal production performance
+- **Enhanced CORS Handling**: Smart environment detection prevents localhost API calls in production
+- **Improved Scalability**: Dynamic relay discovery supports network growth without manual configuration
+- **Location Format Standardization**: Clean "City, Country" format for all relay locations
+- **UI Consistency**: Unified relay ordering between dashboard tiles and footer
+
+### Previous Improvements (v2.0.0)
 
 - **Reduced Bundle Size**: Optimized from ~400KB to ~320KB total
 - **Faster Initial Load**: Improved loading screen and initialization
@@ -40,7 +52,6 @@ Visit the live dashboard at: [https://shugur.net](https://shugur.net)
 - **Enhanced Chart Performance**: Debounced updates and optimized rendering
 - **Improved Error Handling**: Better fallback mechanisms and user feedback
 - **Mobile Optimization**: Enhanced mobile responsiveness and touch interactions
-- **Auto-refresh Optimization**: Better resource management and pause/resume functionality
 
 ### Technical Optimizations
 
@@ -153,25 +164,20 @@ docker run -p 8080:8080 -v $(pwd)/dist:/usr/share/nginx/html:ro nginx
 
 ### Dashboard Configuration
 
-Edit `dashboard-config.json` to customize:
+The dashboard automatically configures itself with these settings:
 
-```json
-{
-  "dashboard": {
-    "refreshInterval": 30000,
-    "maxChartPoints": 20,
-    "maxEvents": 50
-  },
-  "relays": {
-    "seedRelays": [...]
-  },
-  "features": {
-    "autoRefresh": true,
-    "darkMode": true,
-    "realTimeCharts": true
-  }
-}
-```
+- **Auto-refresh**: 5-second intervals with pause/resume capability
+- **Location Detection**: Browser geolocation with IP-based fallback
+- **Environment Detection**: Automatically detects localhost vs production
+- **CORS Handling**: Smart API endpoint selection based on environment
+- **Relay Discovery**: Dynamic scaling without manual configuration
+
+### Production Features
+
+- **Environment-Aware**: Automatically excludes localhost endpoints in production
+- **CORS-Free Operation**: Uses browser geolocation to avoid API CORS issues
+- **Clean Logging**: Minimal console output in production environments
+- **Scalable Architecture**: Supports network growth without code changes
 
 ### Relay Nodes
 
@@ -327,7 +333,18 @@ For support and questions:
 
 ## 🔄 Changelog
 
-### v2.0.0 (Current)
+### v2.1.0 (Current)
+- ✅ **Auto-Refresh Dashboard**: 5-second automatic updates with real-time data
+- ✅ **Intelligent Location Detection**: Browser geolocation with IP-based fallback
+- ✅ **Production Environment Detection**: Automatic localhost exclusion in production
+- ✅ **CORS-Free Operation**: Smart API handling prevents cross-origin issues
+- ✅ **Clean Console Output**: Minimal debugging logs for production deployment
+- ✅ **Enhanced Scalability**: Dynamic relay discovery supports network growth
+- ✅ **Location Format Standardization**: Clean "City, Country" display format
+- ✅ **UI Consistency**: Unified relay ordering throughout dashboard
+- ✅ **Professional Production Ready**: Optimized for live deployment
+
+### v2.0.0
 - ✅ Performance optimizations and bundle size reduction
 - ✅ Enhanced error handling and fallback mechanisms
 - ✅ Improved mobile responsiveness
@@ -347,10 +364,10 @@ For support and questions:
 
 ## 📈 Performance Metrics
 
-- **Bundle Size**: ~320KB total (down from ~400KB)
-- **Load Time**: <2s on fast connections
-- **Memory Usage**: <50MB typical
-- **CPU Usage**: <5% on modern devices
-- **Mobile Performance**: 90+ Lighthouse score
-
-````
+- **Bundle Size**: ~320KB total (optimized and production-ready)
+- **Auto-Refresh**: 5-second intervals for real-time monitoring
+- **Load Time**: <2s on fast connections with instant updates
+- **Memory Usage**: <50MB typical with efficient data management
+- **CPU Usage**: <5% on modern devices with optimized rendering
+- **Mobile Performance**: 90+ Lighthouse score with responsive design
+- **Production Deployment**: Zero CORS issues with smart environment detection

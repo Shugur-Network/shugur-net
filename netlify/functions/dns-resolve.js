@@ -52,7 +52,6 @@ exports.handler = async (event, context) => {
       // Return the first A record
       const ipAddress = data.Answer.find(record => record.type === 1)?.data
       if (ipAddress) {
-        console.log(`Resolved ${hostname} to ${ipAddress}`)
         return {
           statusCode: 200,
           headers,
