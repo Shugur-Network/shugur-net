@@ -39,7 +39,7 @@ const SEED_RELAYS = [
     { id: 'shu01', name: 'shu01.shugur.net', url: 'wss://shu01.shugur.net', apiUrl: 'https://shu01.shugur.net', isSeed: true },
     { id: 'shu02', name: 'shu02.shugur.net', url: 'wss://shu02.shugur.net', apiUrl: 'https://shu02.shugur.net', isSeed: true },
     { id: 'shu03', name: 'shu03.shugur.net', url: 'wss://shu03.shugur.net', apiUrl: 'https://shu03.shugur.net', isSeed: true }
-    // shu04 will be discovered dynamically from cluster info
+    // Other relays (shu04, shu05, etc.) will be discovered dynamically from cluster info
 ]
 
 // For development, also try local endpoint
@@ -293,30 +293,69 @@ async function initializeRelayNodes() {
         
         if (availableRelays.length > 0) {
             console.log(`Found ${availableRelays.length} available relays`)
-            ALL_RELAY_NODES = availableRelays
+            // Only use seed relays for initial setup - cluster discovery will add others
+            ALL_RELAY_NODES = availableRelays.filter(relay => relay.isSeed && !relay.isLocal)
         } else {
-            console.log('No relays responding, using all configured relays anyway')
+            console.log('No relays responding, using seed relays anyway')
             ALL_RELAY_NODES = [...SEED_RELAYS]
         }
         
         // Try to discover the full cluster from available relays
         await discoverClusterNodes()
         
+        // Clean up any duplicate UI elements before initializing
+        const container = document.getElementById('relay-nodes')
+        if (container) {
+            // Remove all existing relay elements to prevent duplicates
+            const existingElements = container.querySelectorAll('[id^="relay-"]')
+            existingElements.forEach(element => element.remove())
+            console.log(`Cleaned up ${existingElements.length} existing relay elements`)
+        }
+        
         // Initialize UI for all discovered nodes
+        const processedNodes = new Set() // Track which nodes we've already processed
         for (const node of ALL_RELAY_NODES) {
             try {
-                // Detect location based on hostname using IP geolocation
-                const hostname = node.apiUrl.replace('https://', '').replace('http://', '')
-                
-                // Skip IP location for localhost
-                let location
-                if (node.isLocal) {
-                    location = 'Local Development'
-                } else {
-                    // Use fallback location detection instead of IP API due to CORS/rate limit issues
-                    const hostname = node.apiUrl.replace('https://', '').replace('http://', '')
-                    location = detectRelayLocation(hostname)
+                // Skip if we've already processed this node
+                if (processedNodes.has(node.id) || processedNodes.has(node.name)) {
+                    console.log(`Skipping duplicate node: ${node.id} (${node.name})`)
+                    continue
                 }
+                processedNodes.add(node.id)
+                processedNodes.add(node.name)
+                
+                // Check if UI element already exists
+                const existingElement = document.getElementById(`relay-${node.id}`)
+                if (existingElement) {
+                    console.log(`UI element already exists for ${node.id}, skipping`)
+                    continue
+                }
+                
+                // Detect location based on hostname using IP geolocation
+                let location = node.location // Use existing location if already set
+                
+                if (!location) {
+                    console.log(`Getting location for node ${node.id} (${node.name})`)
+                    // Skip IP location for localhost
+                    if (node.isLocal) {
+                        location = 'Local Development'
+                    } else {
+                        // Get real location via IP geolocation
+                        const hostname = node.apiUrl.replace('https://', '').replace('http://', '')
+                        try {
+                            location = await getIPLocation(hostname)
+                            console.log(`Got location for ${node.id}: ${location}`)
+                        } catch (error) {
+                            console.warn(`IP geolocation failed for ${hostname}, using fallback`)
+                            location = detectRelayLocation(hostname)
+                        }
+                    }
+                } else {
+                    console.log(`Using existing location for ${node.id}: ${location}`)
+                }
+                
+                // Ensure location is set on the node object
+                node.location = location
                 
                 state.relays.set(node.id, {
                     ...node,
@@ -447,11 +486,16 @@ function startDataCollection() {
 }
 
 function updateDashboardData() {
-    // Fetch real data from relay APIs
-    fetchRelayData()
-    updateNetworkOverview()
-    // updateCharts() is now called from within fetchRelayData() to ensure proper sequencing
-    updateLastUpdatedTime()
+    console.log('🔄 Dashboard data update started at', new Date().toLocaleTimeString())
+    
+    // Properly handle async operation
+    fetchRelayData().then(() => {
+        updateNetworkOverview()
+        updateLastUpdatedTime()
+        console.log('✅ Dashboard data update completed')
+    }).catch(error => {
+        console.error('❌ Dashboard data update failed:', error)
+    })
 }
 
 async function fetchRelayData() {
@@ -764,7 +808,10 @@ function updateCharts() {
 }
 
 function updateLastUpdatedTime() {
-    document.getElementById('last-updated').textContent = format(new Date(), 'HH:mm:ss')
+    const element = document.getElementById('last-updated')
+    if (element) {
+        element.textContent = format(new Date(), 'HH:mm:ss')
+    }
 }
 
 // Cluster discovery and management
@@ -811,58 +858,152 @@ async function discoverClusterNodes() {
     }
     
     // Build complete relay list from cluster information
+    const previousRelayIds = new Set(ALL_RELAY_NODES.map(node => node.id))
+    const previousNodeIds = new Set(ALL_RELAY_NODES.map(node => node.nodeId || node.id))
+    const previousHostnames = new Set(ALL_RELAY_NODES.map(node => node.name))
+    
     DISCOVERED_RELAYS = []
-    ALL_RELAY_NODES = []
+    const tempAllNodes = [] // Temporary array to avoid duplicates
+    const newlyDiscoveredNodes = []
+    
+    // First, add all existing seed relays to temp array
+    for (const seedRelay of SEED_RELAYS) {
+        const existingSeed = ALL_RELAY_NODES.find(n => n.id === seedRelay.id)
+        if (existingSeed) {
+            tempAllNodes.push(existingSeed)
+        }
+    }
     
     for (const node of clusterInfo.all_nodes) {
         // Extract hostname from address (remove port)
         const hostname = node.address.split(':')[0]
-        const nodeId = `node-${node.node_id}`
+        
+        // Use hostname-based ID for consistency (not node.node_id which can change)
+        const nodeId = hostname.replace('.shugur.net', '').replace('.', '-')
         
         // Check if this is one of our known seed relays
         const seedRelay = SEED_RELAYS.find(seed => seed.apiUrl.includes(hostname))
         
         if (seedRelay) {
-            // Use seed relay configuration
-            ALL_RELAY_NODES.push({
-                ...seedRelay,
-                nodeId: node.node_id,
-                clusterAddress: node.address,
-                sqlAddress: node.sql_address,
-                isLive: node.is_live,
-                ranges: node.ranges,
-                leases: node.leases,
-                startedAt: node.started_at,
-                serverVersion: node.server_version
-            })
-        } else {
-            // This is a newly discovered node
-            const newNode = {
-                id: nodeId,
-                name: hostname,
-                url: `wss://${hostname}`,
-                apiUrl: `https://${hostname}`,
-                nodeId: node.node_id,
-                clusterAddress: node.address,
-                sqlAddress: node.sql_address,
-                isLive: node.is_live,
-                ranges: node.ranges,
-                leases: node.leases,
-                startedAt: node.started_at,
-                serverVersion: node.server_version,
-                isSeed: false
+            // Update existing seed relay with cluster info (don't duplicate)
+            const existingNode = tempAllNodes.find(n => n.id === seedRelay.id || n.name === hostname)
+            if (existingNode) {
+                // Update cluster info on existing node
+                existingNode.nodeId = node.node_id
+                existingNode.clusterAddress = node.address
+                existingNode.sqlAddress = node.sql_address
+                existingNode.isLive = node.is_live
+                existingNode.ranges = node.ranges
+                existingNode.leases = node.leases
+                existingNode.startedAt = node.started_at
+                existingNode.serverVersion = node.server_version
+            } else {
+                // Add seed relay if not already in temp array
+                tempAllNodes.push({
+                    ...seedRelay,
+                    nodeId: node.node_id,
+                    clusterAddress: node.address,
+                    sqlAddress: node.sql_address,
+                    isLive: node.is_live,
+                    ranges: node.ranges,
+                    leases: node.leases,
+                    startedAt: node.started_at,
+                    serverVersion: node.server_version
+                })
             }
-            
-            DISCOVERED_RELAYS.push(newNode)
-            ALL_RELAY_NODES.push(newNode)
+        } else {
+            // This is a discovered node - check for duplicates by multiple criteria
+            const existingNode = tempAllNodes.find(n => 
+                n.id === nodeId || 
+                n.name === hostname || 
+                (n.nodeId && n.nodeId === node.node_id)
+            )
+            if (!existingNode) {
+                const newNode = {
+                    id: nodeId,
+                    name: hostname,
+                    url: `wss://${hostname}`,
+                    apiUrl: `https://${hostname}`,
+                    nodeId: node.node_id,
+                    clusterAddress: node.address,
+                    sqlAddress: node.sql_address,
+                    isLive: node.is_live,
+                    ranges: node.ranges,
+                    leases: node.leases,
+                    startedAt: node.started_at,
+                    serverVersion: node.server_version,
+                    isSeed: false
+                }
+                
+                DISCOVERED_RELAYS.push(newNode)
+                tempAllNodes.push(newNode)
+                
+                // Track if this is truly a new node we haven't seen before
+                if (!previousRelayIds.has(nodeId) && !previousNodeIds.has(node.node_id) && !previousHostnames.has(hostname)) {
+                    newlyDiscoveredNodes.push(newNode)
+                }
+            } else {
+                console.log(`Skipping duplicate discovered node: ${hostname} (already exists as ${existingNode.id})`)
+            }
         }
     }
+    
+    // Update ALL_RELAY_NODES with the deduplicated list
+    ALL_RELAY_NODES = tempAllNodes
     
     console.log(`Cluster discovery complete:`)
     console.log(`- Total nodes in cluster: ${ALL_RELAY_NODES.length}`)
     console.log(`- Seed relays: ${SEED_RELAYS.length}`)
     console.log(`- Discovered relays: ${DISCOVERED_RELAYS.length}`)
+    console.log(`- Newly discovered nodes: ${newlyDiscoveredNodes.length}`)
     console.log(`- Live nodes: ${ALL_RELAY_NODES.filter(n => n.isLive !== false).length}`)
+    
+    // Get locations for all newly discovered relays
+    if (newlyDiscoveredNodes.length > 0) {
+        console.log('Getting locations for newly discovered relays...')
+        for (const node of newlyDiscoveredNodes) {
+            try {
+                console.log(`Getting location for newly discovered node: ${node.name}`)
+                const location = await getIPLocation(node.name)
+                node.location = location
+                console.log(`Location for ${node.name}: ${location}`)
+                
+                // Add to UI if we're past initial load and node doesn't already exist in UI
+                const container = document.getElementById('relay-nodes')
+                const existingElement = document.getElementById(`relay-${node.id}`)
+                if (container && !existingElement) {
+                    state.relays.set(node.id, {
+                        ...node,
+                        location: location,
+                        status: node.isLive === false ? 'offline' : 'connecting',
+                        connections: 0,
+                        uptime: 0,
+                        lastSeen: null,
+                        responseTime: 0,
+                        events: 0
+                    })
+                    
+                    const nodeElement = createRelayNodeElement({...node, location})
+                    container.appendChild(nodeElement)
+                    console.log(`Added newly discovered node ${node.id} to UI`)
+                } else if (existingElement) {
+                    console.log(`Node ${node.id} already exists in UI, updating location if needed`)
+                    // Update location in existing state if it's different
+                    const existingRelay = state.relays.get(node.id)
+                    if (existingRelay && existingRelay.location !== location) {
+                        existingRelay.location = location
+                        const locationElement = document.getElementById(`location-${node.id}`)
+                        if (locationElement) {
+                            locationElement.textContent = location
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn(`Failed to get location for ${node.name}:`, error)
+                node.location = detectRelayLocation(node.name)
+            }
+        }
+    }
     
     // Update UI to show total relay count
     const totalRelaysElement = document.getElementById('total-relays')
@@ -920,12 +1061,24 @@ function detectRelayLocation(hostname) {
     // Enhanced location detection based on hostname
     const hostLower = hostname.toLowerCase()
     
+    // Check for shugur network nodes
     if (hostLower.includes('shu01')) return 'US East (Primary)'
     if (hostLower.includes('shu02')) return 'US West (Secondary)' 
     if (hostLower.includes('shu03')) return 'EU Central (Tertiary)'
     if (hostLower.includes('shu04')) return 'Asia Pacific (Quaternary)'
+    if (hostLower.includes('shu05')) return 'Australia (Node 5)'
+    if (hostLower.includes('shu06')) return 'South America (Node 6)'
+    if (hostLower.includes('shu07')) return 'Africa (Node 7)'
+    if (hostLower.includes('shu08')) return 'Middle East (Node 8)'
     
-    // For discovered nodes, use a generic approach
+    // For any other shuXX pattern
+    const shuMatch = hostLower.match(/shu(\d+)/)
+    if (shuMatch) {
+        const nodeNum = shuMatch[1]
+        return `Shugur Node ${nodeNum}`
+    }
+    
+    // For discovered nodes with numeric patterns
     if (hostLower.includes('node-')) {
         const nodeNum = hostLower.match(/node-(\d+)/)?.[1]
         return nodeNum ? `Cluster Node ${nodeNum}` : 'Cluster Node'
@@ -944,7 +1097,41 @@ function detectRelayLocation(hostname) {
 // IP location cache to avoid repeated API calls
 const locationCache = new Map()
 
-// New function to get IP-based location using ipapi.co
+// Function to resolve FQDN to IP address
+async function resolveHostnameToIP(hostname) {
+    try {
+        // Use a DNS resolution service that supports CORS
+        const response = await fetch(`https://dns.google/resolve?name=${hostname}&type=A`, {
+            headers: { 'Accept': 'application/json' },
+            signal: AbortSignal.timeout(5000)
+        })
+        
+        if (!response.ok) {
+            throw new Error(`DNS resolution failed: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        
+        if (data.Answer && data.Answer.length > 0) {
+            // Return the first A record
+            const ipAddress = data.Answer.find(record => record.type === 1)?.data
+            if (ipAddress) {
+                console.log(`Resolved ${hostname} to ${ipAddress}`)
+                return ipAddress
+            }
+        }
+        
+        throw new Error('No A record found')
+        
+    } catch (error) {
+        console.warn(`Failed to resolve ${hostname} to IP:`, error.message)
+        
+        // Fallback: try using the hostname directly (some services accept it)
+        return hostname
+    }
+}
+
+// Improved function to get IP-based location
 async function getIPLocation(hostname) {
     console.log(`Getting location for hostname: ${hostname}`)
     
@@ -955,21 +1142,26 @@ async function getIPLocation(hostname) {
     }
     
     try {
-        // Add a small delay to avoid rate limiting (ipapi.co allows 1000 requests/day for free)
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // First resolve hostname to IP
+        const ipAddress = await resolveHostnameToIP(hostname)
         
-        console.log(`Making API call to ipapi.co for ${hostname}`)
+        // Add a small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 200))
         
-        // First, resolve hostname to IP (we'll use a simple approach)
-        // For production, you might want to use a more robust method
-        const response = await fetch(`https://ipapi.co/${hostname}/json/`)
+        console.log(`Getting location for IP: ${ipAddress}`)
+        
+        // Try ipapi.co first (free tier: 1000 requests/month)
+        const response = await fetch(`https://ipapi.co/${ipAddress}/json/`, {
+            headers: { 'Accept': 'application/json' },
+            signal: AbortSignal.timeout(5000)
+        })
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`)
         }
         
         const data = await response.json()
-        console.log(`IP API response for ${hostname}:`, data)
+        console.log(`Location API response for ${ipAddress}:`, data)
         
         if (data.error) {
             throw new Error(data.reason || 'Location lookup failed')
@@ -990,7 +1182,8 @@ async function getIPLocation(hostname) {
         return location
         
     } catch (error) {
-        console.warn(`Failed to get location for ${hostname}:`, error)
+        console.warn(`Failed to get location for ${hostname}:`, error.message)
+        
         // Fallback to the original hostname-based detection
         const fallbackLocation = detectRelayLocation(hostname)
         console.log(`Using fallback location for ${hostname}: ${fallbackLocation}`)
@@ -1149,9 +1342,25 @@ function getLocationFromId(id) {
         'shu01': 'US-East',
         'shu02': 'US-West', 
         'shu03': 'EU-Central',
-        'shu04': 'AP-Southeast'
+        'shu04': 'AP-Southeast',
+        'shu05': 'Australia',
+        'shu06': 'S-America',
+        'shu07': 'Africa',
+        'shu08': 'M-East'
     }
-    return locationMap[id] || 'Unknown'
+    
+    // Check direct mapping first
+    if (locationMap[id]) {
+        return locationMap[id]
+    }
+    
+    // Handle dynamic shuXX pattern
+    const shuMatch = id.match(/shu(\d+)/)
+    if (shuMatch) {
+        return `Node-${shuMatch[1]}`
+    }
+    
+    return 'Unknown'
 }
 
 function getStatusColor(status) {
