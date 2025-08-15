@@ -26,16 +26,17 @@ async function testRelayConnectivity(relays) {
     return results.filter(r => r.status === 'fulfilled' && r.value.available).map(r => r.value.relay)
 }
 
-// Dashboard configuration
-const SEED_RELAYS = [
-    { id: 'shu01', name: 'shu01.shugur.net', url: 'wss://shu01.shugur.net', apiUrl: 'https://shu01.shugur.net', isSeed: true },
-    { id: 'shu02', name: 'shu02.shugur.net', url: 'wss://shu02.shugur.net', apiUrl: 'https://shu02.shugur.net', isSeed: true },
-    { id: 'shu03', name: 'shu03.shugur.net', url: 'wss://shu03.shugur.net', apiUrl: 'https://shu03.shugur.net', isSeed: true }
-    // Other relays (shu04, shu05, etc.) will be discovered dynamically from cluster info
+// Dashboard configuration - all relays are treated equally
+const INITIAL_RELAYS = [
+    { id: 'shu01', name: 'shu01.shugur.net', url: 'wss://shu01.shugur.net', apiUrl: 'https://shu01.shugur.net' },
+    { id: 'shu02', name: 'shu02.shugur.net', url: 'wss://shu02.shugur.net', apiUrl: 'https://shu02.shugur.net' },
+    { id: 'shu03', name: 'shu03.shugur.net', url: 'wss://shu03.shugur.net', apiUrl: 'https://shu03.shugur.net' },
+    { id: 'shu04', name: 'shu04.shugur.net', url: 'wss://shu04.shugur.net', apiUrl: 'https://shu04.shugur.net' }
+    // Additional relays will be discovered dynamically from cluster info
 ]
 
 // For development, also try local endpoint
-const LOCAL_RELAY = { id: 'local', name: 'localhost:8080', url: 'ws://localhost:8080', apiUrl: 'http://localhost:8080', isSeed: true, isLocal: true }
+const LOCAL_RELAY = { id: 'local', name: 'localhost:8080', url: 'ws://localhost:8080', apiUrl: 'http://localhost:8080', isLocal: true }
 
 // Dynamic relay nodes discovered from cluster
 let DISCOVERED_RELAYS = []
@@ -94,15 +95,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('dashboard').classList.remove('hidden')
         document.getElementById('dashboard').classList.add('show')
         
+        // Start periodic connection pool cleanup
+        setInterval(cleanupConnectionPool, 30000) // Clean up every 30 seconds
+        
     } catch (error) {
         console.error('Dashboard initialization failed:', error)
         // Clear the timeout
         clearTimeout(maxLoadingTime)
         // Show dashboard anyway with fallback
-        ALL_RELAY_NODES = [...SEED_RELAYS]
+        // Fallback: use initial relays only
+        ALL_RELAY_NODES = [...INITIAL_RELAYS]
         
         // Initialize with fallback data
-        for (const node of SEED_RELAYS) {
+        for (const node of INITIAL_RELAYS) {
             const location = detectRelayLocation(node.name)
             state.relays.set(node.id, {
                 ...node,
@@ -272,14 +277,14 @@ async function initializeRelayNodes() {
     try {
         // Test which relays are available (only include localhost in development)
         const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        const testRelays = isLocalhost ? [LOCAL_RELAY, ...SEED_RELAYS] : [...SEED_RELAYS]
+        const testRelays = isLocalhost ? [LOCAL_RELAY, ...INITIAL_RELAYS] : [...INITIAL_RELAYS]
         const availableRelays = await testRelayConnectivity(testRelays)
         
         if (availableRelays.length > 0) {
             // Only use seed relays for initial setup - cluster discovery will add others
-            ALL_RELAY_NODES = availableRelays.filter(relay => relay.isSeed && !relay.isLocal)
+            ALL_RELAY_NODES = availableRelays.filter(relay => relay.isLocal)
         } else {
-            ALL_RELAY_NODES = [...SEED_RELAYS]
+            ALL_RELAY_NODES = [...INITIAL_RELAYS]
         }
         
         // Try to discover the full cluster from available relays
@@ -336,7 +341,7 @@ async function initializeRelayNodes() {
                 state.relays.set(node.id, {
                     ...node,
                     location: location,
-                    status: node.isLive === false ? 'offline' : 'connecting',
+                    status: 'connecting',
                     connections: 0,
                     uptime: 0,
                     lastSeen: null,
@@ -354,10 +359,10 @@ async function initializeRelayNodes() {
     } catch (error) {
         console.error('Failed to initialize relay nodes:', error)
         
-        // Fallback: use seed relays only
-        ALL_RELAY_NODES = [...SEED_RELAYS]
+        // Fallback: use initial relays only
+        ALL_RELAY_NODES = [...INITIAL_RELAYS]
         
-        for (const node of SEED_RELAYS) {
+        for (const node of INITIAL_RELAYS) {
             try {
                 const hostname = node.apiUrl.replace('https://', '').replace('http://', '')
                 const location = detectRelayLocation(hostname)
@@ -390,8 +395,8 @@ function createRelayNodeElement(node) {
     // Show additional info for discovered nodes - remove nodeId display
     const nodeTitle = `${node.name}`
     
-    const statusBadgeClass = node.isLive === false ? 'offline' : 'connecting'
-    const statusText = node.isLive === false ? 'Offline' : 'Connecting'
+    const statusBadgeClass = 'connecting'
+    const statusText = 'Connecting'
     
     div.innerHTML = `
         <div class="flex items-start justify-between mb-4">
@@ -537,11 +542,16 @@ async function fetchRelayData() {
             
             // Update relay state with real data
             relay.status = data.status || 'online'
-            relay.connections = data.active_connections || 0
+            relay.connections = Math.max(0, data.active_connections || 0) // Ensure connections are never negative
             relay.uptime = data.uptime_seconds || 0
             relay.lastSeen = new Date()
             relay.events = data.events_per_second || 0
             relay.loadPercentage = data.load_percentage || 0
+            
+            // Ensure proper status: if connections > 0, status should be 'online'
+            if (relay.connections > 0 && relay.status === 'idle') {
+                relay.status = 'online'
+            }
             
             // If load percentage is 0, calculate it based on CPU + Memory usage
             if (relay.loadPercentage === 0) {
@@ -587,7 +597,16 @@ async function fetchRelayData() {
             relay.relayId = data.relay_id || node.id
             
             // Measure real Nostr response time
-            relay.responseTime = await measureNostrResponseTime(node.url)
+            relay.responseTime = await measureNostrResponseTimeWithPool(node.id)
+            
+            // Log detailed diagnostics
+            logResponseTimeDiagnostics(node.id, relay.responseTime, 'WebSocket')
+            
+            // Fallback: if WebSocket measurement fails, try HTTP ping
+            if (relay.responseTime === 0) {
+                relay.responseTime = await measureHTTPResponseTime(node.apiUrl)
+                logResponseTimeDiagnostics(node.id, relay.responseTime, 'HTTP')
+            }
             
             if (relay.status === 'online' || relay.status === 'idle') {
                 activeCount++
@@ -595,6 +614,11 @@ async function fetchRelayData() {
             totalConnections += relay.connections
             totalEvents += relay.events
             totalMessagesProcessed += relay.messagesProcessed
+            
+            // Ensure totals never go negative
+            totalConnections = Math.max(0, totalConnections)
+            totalEvents = Math.max(0, totalEvents)
+            totalMessagesProcessed = Math.max(0, totalMessagesProcessed)
             
             // Only set cluster events stored from first available relay (since it's cluster-wide)
             if (!clusterEventsStoredSet && relay.status === 'online' && relay.eventsStored > 0) {
@@ -608,7 +632,7 @@ async function fetchRelayData() {
 
             // Update UI for this relay
             updateRelayNodeUI(relay)
-            console.log(`Updated UI for ${node.id}, status: ${relay.status}, connections: ${relay.connections}`)
+            console.log(`Updated UI for ${node.id}, status: ${relay.status}, connections: ${relay.connections}, responseTime: ${relay.responseTime}ms`)
 
         } catch (error) {
             console.error(`Failed to fetch data for ${node.id}:`, error)
@@ -702,6 +726,12 @@ function updateRelayNodeUI(relay) {
     statusElement.textContent = statusText
     statusElement.className = `status-badge ${relay.status || 'offline'}`
     
+    // Ensure status is consistent: if connections > 0, show as online
+    if (relay.connections > 0 && relay.status === 'idle') {
+        statusElement.textContent = 'Online'
+        statusElement.className = 'status-badge online'
+    }
+    
     // Update metrics
     connectionsElement.textContent = relay.connections.toLocaleString()
     messagesElement.textContent = relay.messagesProcessed.toLocaleString()
@@ -789,39 +819,36 @@ async function discoverClusterNodes() {
     
     let clusterInfo = null
     
-    // Try each seed relay until we get cluster information
-    for (const seedRelay of SEED_RELAYS) {
+    // Try each initial relay until we get cluster information
+    for (const initialRelay of INITIAL_RELAYS) {
         try {
-            console.log(`Trying to get cluster info from ${seedRelay.id}...`)
-            
-            const response = await fetch(`${seedRelay.apiUrl}/api/metrics`, {
+            console.log(`Trying to get cluster info from ${initialRelay.id}...`)
+            const response = await fetch(`${initialRelay.apiUrl}/api/cluster`, {
+                signal: AbortSignal.timeout(5000),
                 method: 'GET',
-                headers: { 'Accept': 'application/json' },
-                signal: AbortSignal.timeout(8000) // Increased timeout
+                headers: { 'Accept': 'application/json' }
             })
             
             if (response.ok) {
-                const data = await response.json()
-                if (data.cluster && data.cluster.all_nodes) {
-                    clusterInfo = data.cluster
-                    console.log(`Got cluster info from ${seedRelay.id}:`, clusterInfo)
-                    break
-                }
+                clusterInfo = await response.json()
+                console.log(`Successfully got cluster info from ${initialRelay.id}:`, clusterInfo)
+                break
+            } else {
+                console.log(`Failed to get cluster info from ${initialRelay.id}: ${response.status}`)
             }
         } catch (error) {
-            console.warn(`Failed to get cluster info from ${seedRelay.id}:`, error.message)
-            continue
+            console.log(`Error getting cluster info from ${initialRelay.id}:`, error.message)
         }
     }
     
     if (!clusterInfo) {
-        console.warn('Could not discover cluster topology, falling back to seed relays only')
-        ALL_RELAY_NODES = [...SEED_RELAYS]
+        console.warn('Could not discover cluster topology, falling back to initial relays only')
+        ALL_RELAY_NODES = [...INITIAL_RELAYS]
         
         // Update UI to show fallback count
         const totalRelaysElement = document.getElementById('total-relays')
         if (totalRelaysElement) {
-            totalRelaysElement.textContent = SEED_RELAYS.length
+            totalRelaysElement.textContent = INITIAL_RELAYS.length
         }
         return
     }
@@ -835,11 +862,16 @@ async function discoverClusterNodes() {
     const tempAllNodes = [] // Temporary array to avoid duplicates
     const newlyDiscoveredNodes = []
     
-    // First, add all existing seed relays to temp array
-    for (const seedRelay of SEED_RELAYS) {
-        const existingSeed = ALL_RELAY_NODES.find(n => n.id === seedRelay.id)
-        if (existingSeed) {
-            tempAllNodes.push(existingSeed)
+    // First, add all existing initial relays to temp array
+    for (const initialRelay of INITIAL_RELAYS) {
+        const existingInitial = ALL_RELAY_NODES.find(n => n.id === initialRelay.id)
+        if (existingInitial) {
+            // Update with any new information from cluster
+            existingInitial.isLive = existingInitial.isLive
+            tempAllNodes.push(existingInitial)
+        } else {
+            // Add initial relay to discovered list
+            tempAllNodes.push(initialRelay)
         }
     }
     
@@ -848,14 +880,19 @@ async function discoverClusterNodes() {
         const hostname = node.address.split(':')[0]
         
         // Use hostname-based ID for consistency (not node.node_id which can change)
-        const nodeId = hostname.replace('.shugur.net', '').replace('.', '-')
+        let nodeId = node.node_id
         
-        // Check if this is one of our known seed relays
-        const seedRelay = SEED_RELAYS.find(seed => seed.apiUrl.includes(hostname))
+        // Check if this is one of our known initial relays
+        const initialRelay = INITIAL_RELAYS.find(initial => initial.apiUrl.includes(hostname))
         
-        if (seedRelay) {
-            // Update existing seed relay with cluster info (don't duplicate)
-            const existingNode = tempAllNodes.find(n => n.id === seedRelay.id || n.name === hostname)
+        if (initialRelay) {
+            // This is a known initial relay, use its ID
+            nodeId = initialRelay.id
+        }
+        
+        if (initialRelay) {
+            // Update existing initial relay with cluster info (don't duplicate)
+            const existingNode = tempAllNodes.find(n => n.id === initialRelay.id || n.name === hostname)
             if (existingNode) {
                 // Update cluster info on existing node
                 existingNode.nodeId = node.node_id
@@ -867,9 +904,9 @@ async function discoverClusterNodes() {
                 existingNode.startedAt = node.started_at
                 existingNode.serverVersion = node.server_version
             } else {
-                // Add seed relay if not already in temp array
+                // Add initial relay if not already in temp array
                 tempAllNodes.push({
-                    ...seedRelay,
+                    ...initialRelay,
                     nodeId: node.node_id,
                     clusterAddress: node.address,
                     sqlAddress: node.sql_address,
@@ -893,15 +930,13 @@ async function discoverClusterNodes() {
                     name: hostname,
                     url: `wss://${hostname}`,
                     apiUrl: `https://${hostname}`,
-                    nodeId: node.node_id,
-                    clusterAddress: node.address,
+                    location: null, // Will be set later
                     sqlAddress: node.sql_address,
                     isLive: node.is_live,
                     ranges: node.ranges,
                     leases: node.leases,
                     startedAt: node.started_at,
-                    serverVersion: node.server_version,
-                    isSeed: false
+                    serverVersion: node.server_version
                 }
                 
                 DISCOVERED_RELAYS.push(newNode)
@@ -922,7 +957,6 @@ async function discoverClusterNodes() {
     
     console.log(`Cluster discovery complete:`)
     console.log(`- Total nodes in cluster: ${ALL_RELAY_NODES.length}`)
-    console.log(`- Seed relays: ${SEED_RELAYS.length}`)
     console.log(`- Discovered relays: ${DISCOVERED_RELAYS.length}`)
     console.log(`- Newly discovered nodes: ${newlyDiscoveredNodes.length}`)
     console.log(`- Live nodes: ${ALL_RELAY_NODES.filter(n => n.isLive !== false).length}`)
@@ -944,7 +978,7 @@ async function discoverClusterNodes() {
                     state.relays.set(node.id, {
                         ...node,
                         location: location,
-                        status: node.isLive === false ? 'offline' : 'connecting',
+                        status: 'connecting',
                         connections: 0,
                         uptime: 0,
                         lastSeen: null,
@@ -981,16 +1015,24 @@ async function discoverClusterNodes() {
     }
 }
 
+// Connection pool for response time measurements
+const connectionPool = new Map()
+
 // Utility functions
 async function measureNostrResponseTime(wsUrl) {
     return new Promise((resolve) => {
-        const startTime = Date.now()
+        let ws = null
+        let connectionStartTime = Date.now()
+        let messageSentTime = 0
         let responseTime = 0
         
         try {
-            const ws = new WebSocket(wsUrl)
+            ws = new WebSocket(wsUrl)
             
             ws.onopen = () => {
+                // Connection established, now measure only the message round-trip
+                messageSentTime = Date.now()
+                
                 // Send a simple REQ message to test response time
                 const reqMessage = JSON.stringify([
                     "REQ", 
@@ -1001,29 +1043,163 @@ async function measureNostrResponseTime(wsUrl) {
             }
             
             ws.onmessage = (event) => {
-                responseTime = Date.now() - startTime
+                // Measure only the time from sending message to receiving response
+                responseTime = Date.now() - messageSentTime
                 ws.close()
+                
+                console.log(`Response time measurement for ${wsUrl}:`, {
+                    connectionTime: messageSentTime - connectionStartTime,
+                    messageRoundTrip: responseTime,
+                    totalTime: Date.now() - connectionStartTime
+                })
+                
                 resolve(responseTime)
             }
             
             ws.onerror = () => {
-                ws.close()
+                if (ws) ws.close()
                 resolve(0) // Return 0 on error
             }
             
-            // Timeout after 5 seconds
+            // Timeout after 3 seconds for the entire operation
             setTimeout(() => {
-                if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+                if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
                     ws.close()
                     resolve(0)
                 }
-            }, 5000)
+            }, 3000)
             
         } catch (error) {
             console.warn(`Failed to measure Nostr response time for ${wsUrl}:`, error)
+            if (ws) ws.close()
             resolve(0)
         }
     })
+}
+
+// Alternative response time measurement using existing connections if available
+async function measureNostrResponseTimeOptimized(relayId) {
+    const relay = state.relays.get(relayId)
+    if (!relay) return 0
+    
+    // Try to measure response time with better error handling
+    try {
+        const responseTime = await measureNostrResponseTime(relay.url)
+        
+        // Log detailed metrics for debugging
+        console.log(`Optimized response time for ${relayId}:`, {
+            relayId,
+            url: relay.url,
+            responseTime,
+            timestamp: new Date().toISOString()
+        })
+        
+        return responseTime
+    } catch (error) {
+        console.warn(`Optimized response time measurement failed for ${relayId}:`, error)
+        return 0
+    }
+}
+
+// Clean up connection pool
+function cleanupConnectionPool() {
+    for (const [relayId, connection] of connectionPool.entries()) {
+        if (connection && connection.readyState === WebSocket.OPEN) {
+            connection.close()
+        }
+    }
+    connectionPool.clear()
+    console.log('Connection pool cleaned up')
+}
+
+// Enhanced response time measurement with connection reuse
+async function measureNostrResponseTimeWithPool(relayId) {
+    const relay = state.relays.get(relayId)
+    if (!relay) return 0
+    
+    try {
+        // Check if we have a recent connection in the pool
+        const existingConnection = connectionPool.get(relayId)
+        if (existingConnection && existingConnection.readyState === WebSocket.OPEN) {
+            // Try to reuse existing connection for faster measurement
+            const startTime = Date.now()
+            const reqMessage = JSON.stringify([
+                "REQ", 
+                "test-" + Date.now(),
+                { "kinds": [1], "limit": 1 }
+            ])
+            
+            existingConnection.send(reqMessage)
+            
+            // Wait for response with timeout
+            const responseTime = await new Promise((resolve) => {
+                const timeout = setTimeout(() => resolve(0), 2000)
+                
+                existingConnection.onmessage = (event) => {
+                    clearTimeout(timeout)
+                    const roundTripTime = Date.now() - startTime
+                    resolve(roundTripTime)
+                }
+            })
+            
+            if (responseTime > 0) {
+                console.log(`Reused connection response time for ${relayId}: ${responseTime}ms`)
+                return responseTime
+            }
+        }
+        
+        // Fall back to creating new connection
+        return await measureNostrResponseTime(relay.url)
+        
+    } catch (error) {
+        console.warn(`Pooled response time measurement failed for ${relayId}:`, error)
+        return await measureNostrResponseTime(relay.url)
+    }
+}
+
+// Detailed response time diagnostics
+function logResponseTimeDiagnostics(relayId, responseTime, method = 'WebSocket') {
+    const relay = state.relays.get(relayId)
+    if (!relay) return
+    
+    console.log(`Response Time Diagnostics for ${relayId}:`, {
+        relayId,
+        name: relay.name,
+        url: relay.url,
+        method,
+        responseTime: `${responseTime}ms`,
+        timestamp: new Date().toISOString(),
+        location: relay.location,
+        status: relay.status,
+        connections: relay.connections
+    })
+    
+    // Log warning if response time seems unusually high
+    if (responseTime > 1000) {
+        console.warn(`High response time detected for ${relayId}: ${responseTime}ms - this may indicate network issues`)
+    }
+}
+
+// HTTP response time measurement as fallback
+async function measureHTTPResponseTime(apiUrl) {
+    try {
+        const startTime = Date.now()
+        const response = await fetch(`${apiUrl}/api/stats`, {
+            signal: AbortSignal.timeout(3000),
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        })
+        const responseTime = Date.now() - startTime
+        
+        if (response.ok) {
+            console.log(`HTTP response time measurement for ${apiUrl}: ${responseTime}ms`)
+            return responseTime
+        }
+        return 0
+    } catch (error) {
+        console.warn(`HTTP response time measurement failed for ${apiUrl}:`, error)
+        return 0
+    }
 }
 
 function detectRelayLocation(hostname) {
