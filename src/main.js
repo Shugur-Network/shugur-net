@@ -1100,10 +1100,10 @@ const locationCache = new Map()
 // Function to resolve FQDN to IP address
 async function resolveHostnameToIP(hostname) {
     try {
-        // Use a DNS resolution service that supports CORS
-        const response = await fetch(`https://dns.google/resolve?name=${hostname}&type=A`, {
+        // Use Netlify function for DNS resolution (solves CORS)
+        const response = await fetch(`/.netlify/functions/dns-resolve?hostname=${hostname}`, {
             headers: { 'Accept': 'application/json' },
-            signal: AbortSignal.timeout(5000)
+            signal: AbortSignal.timeout(8000)
         })
         
         if (!response.ok) {
@@ -1112,16 +1112,13 @@ async function resolveHostnameToIP(hostname) {
         
         const data = await response.json()
         
-        if (data.Answer && data.Answer.length > 0) {
-            // Return the first A record
-            const ipAddress = data.Answer.find(record => record.type === 1)?.data
-            if (ipAddress) {
-                console.log(`Resolved ${hostname} to ${ipAddress}`)
-                return ipAddress
-            }
+        if (data.success && data.ip) {
+            console.log(`Resolved ${hostname} to ${data.ip}`)
+            return data.ip
+        } else {
+            console.warn(`DNS resolution failed for ${hostname}, using hostname as fallback`)
+            return hostname
         }
-        
-        throw new Error('No A record found')
         
     } catch (error) {
         console.warn(`Failed to resolve ${hostname} to IP:`, error.message)
@@ -1150,36 +1147,34 @@ async function getIPLocation(hostname) {
         
         console.log(`Getting location for IP: ${ipAddress}`)
         
-        // Try ipapi.co first (free tier: 1000 requests/month)
-        const response = await fetch(`https://ipapi.co/${ipAddress}/json/`, {
+        // Use Netlify function to proxy geolocation request (solves CORS)
+        const response = await fetch(`/.netlify/functions/geolocation?ip=${ipAddress}`, {
             headers: { 'Accept': 'application/json' },
-            signal: AbortSignal.timeout(5000)
+            signal: AbortSignal.timeout(10000)
         })
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+            throw new Error(`Netlify function error: ${response.status}`)
         }
         
         const data = await response.json()
-        console.log(`Location API response for ${ipAddress}:`, data)
+        console.log(`Netlify geolocation response for ${ipAddress}:`, data)
         
-        if (data.error) {
-            throw new Error(data.reason || 'Location lookup failed')
+        if (data.error && !data.fallback) {
+            throw new Error(data.error)
         }
         
-        // Format the location nicely
-        const parts = []
-        if (data.city) parts.push(data.city)
-        if (data.region && data.region !== data.city) parts.push(data.region)
-        if (data.country_name) parts.push(data.country_name)
-        
-        const location = parts.length > 0 ? parts.join(', ') : 'Unknown Location'
-        console.log(`Formatted location for ${hostname}: ${location}`)
-        
-        // Cache the result
-        locationCache.set(hostname, location)
-        
-        return location
+        if (data.location) {
+            const location = data.location
+            console.log(`✅ Got real location for ${hostname}: ${location} (via ${data.source})`)
+            
+            // Cache the result
+            locationCache.set(hostname, location)
+            return location
+        } else {
+            // API returned fallback signal
+            throw new Error('Geolocation APIs failed, using fallback')
+        }
         
     } catch (error) {
         console.warn(`Failed to get location for ${hostname}:`, error.message)
