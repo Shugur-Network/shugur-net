@@ -3,562 +3,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shugur Relay Network                        <div class="text-center mt-4">
-                            <span class="text-primary font-mono text-lg" data-metric="nips-count">25</span>
-                            <div class="text-xs text-gray-400">Total Supported</div>
-                        </div>tle>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <meta name="description" content="Distributed Nostr relay network providing censorship-resistant communication infrastructure with high performance and reliability.">
+    <title>Shugur Network - Relay Dashboard</title>
+    <meta name="description" content="Enterprise-grade monitoring dashboard for Shugur relay network">
+    <meta name="keywords" content="nostr, relay, monitoring, shugur, network, dashboard">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://shugur.net/">
+    <meta property="og:title" content="Shugur Network - Relay Dashboard">
+    <meta property="og:description" content="Enterprise-grade monitoring dashboard for Shugur relay network">
+    <meta property="og:image" content="https://shugur.net/og-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://shugur.net/">
+    <meta property="twitter:title" content="Shugur Network - Relay Dashboard">
+    <meta property="twitter:description" content="Enterprise-grade monitoring dashboard for Shugur relay network">
+    <meta property="twitter:image" content="https://shugur.net/og-image.png">
+    
+    <!-- Preconnect to external resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#36BA98',
-                        dark: '#1A1A1A',
-                        lightbg: '#FAFAFA'
-                    },
-                    fontFamily: {
-                        display: ['League Spartan', 'ui-sans-serif', 'system-ui'],
-                        body: ['Roboto', 'ui-sans-serif', 'system-ui']
-                    }
-                }
-            }
-        }
-    </script>
+    
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Roboto', ui-sans-serif, system-ui; }
-        h1, h2, h3 { font-family: 'League Spartan', ui-sans-serif, system-ui; }
-        .pulse-green { animation: pulse-green 2s infinite; }
-        @keyframes pulse-green {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        }
+        
+        /* Ensure dashboard is hidden by default to prevent flash */
+        #dashboard {
+            display: none !important;
+        }
+        
+        #dashboard.show {
+            display: flex !important;
+        }
+        
+        .loading-dots {
+            display: inline-block;
+        }
+        
+        .loading-dots::after {
+            content: '';
+            animation: loading-dots 1.5s infinite;
+        }
+        
+        @keyframes loading-dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+        
+        /* Status badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        .status-badge.online {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-badge.idle {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-badge.connecting {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-badge.offline {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+        
+        /* Dark mode status badges */
+        .dark .status-badge.online {
+            background-color: #14532d;
+            color: #bbf7d0;
+        }
+        
+        .dark .status-badge.idle {
+            background-color: #78350f;
+            color: #fde68a;
+        }
+        
+        .dark .status-badge.connecting {
+            background-color: #1e3a8a;
+            color: #93c5fd;
+        }
+        
+        .dark .status-badge.offline {
+            background-color: #7f1d1d;
+            color: #fca5a5;
+        }
+        
+        /* Progress bars */
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        
+        .dark .progress-bar {
+            background-color: #374151;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-fill.high-load {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+        
+        .progress-fill.critical-load {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
         }
     </style>
 </head>
-<body class="bg-dark text-white min-h-screen">
-    <!-- Header -->
-    <header class="border-b border-gray-800">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                    <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
-                    </svg>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
+            <div class="text-center">
+                <div class="w-16 h-16 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin mx-auto mb-4"></div>
+                <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Loading Shugur Network</h2>
+                <p class="text-gray-500 dark:text-gray-400 loading-dots">Retrieving network informations</p>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="hidden min-h-screen flex flex-col">
+            <!-- Header -->
+            <header class="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center h-16">
+                        <div class="flex items-center">
+                            <img src="./shugur-logo-full.svg" alt="Shugur Network" class="h-8">
+                        </div>
+                        <nav class="hidden md:flex items-center space-x-8">
+                            <a href="https://docs.shugur.com" class="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Documentation</a>
+                            <a href="https://github.com/Shugur-Network" class="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">GitHub</a>
+                        </nav>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="font-display text-xl">Shugur Relay Network</h1>
-                    <div class="text-xs text-gray-400">Distributed Nostr Infrastructure</div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Network Performance -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Network Performance</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Total Active Connections -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Active Connections</p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-connections">--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Messages Processed -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Processed Requests</p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-messages">--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Events Stored -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Stored Events</p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-events-stored">--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Network Uptime -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Network Uptime</p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-white" id="network-uptime">--</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <nav class="flex gap-6 text-sm">
-                <a href="https://developers.shugur.net" class="hover:text-primary">Developer Hub</a>
-                <a href="https://shugur.com" class="hover:text-primary">Company</a>
-                <a href="https://status.shugur.net" class="hover:text-primary">Status</a>
-            </nav>
-        </div>
-    </header>
 
-    <div class="max-w-7xl mx-auto px-6 py-8">
-        <!-- Distributed Relay Network Status -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-display">Distributed Nostr Relay Network</h2>
-                <button id="refresh-btn" class="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded text-sm flex items-center gap-2">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            <!-- Relay Nodes -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Network Status</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="relay-nodes">
+                    <!-- Relay nodes will be dynamically generated from cluster discovery -->
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Messages Delta Chart -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Requests</h3>
+                    <div class="h-64">
+                        <canvas id="messages-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Events Delta Chart -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Events</h3>
+                    <div class="h-64">
+                        <canvas id="events-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Quick Access -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Quick Access</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="https://docs.shugur.com" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                    Documentation
+                                </a>
+                                <p class="text-xs text-gray-500 dark:text-gray-500">Guides, API reference</p>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Connect to Network -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Connect to Network</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <h4 class="text-xs font-medium text-gray-700 dark:text-gray-300">Direct Node Access</h4>
+                                <div id="footer-relay-list" class="text-xs space-y-1">
+                                    <!-- Relay endpoints will be populated dynamically -->
+                                </div>
+                                <div id="view-all-button" class="mt-2 hidden">
+                                    <button onclick="openAllRelaysModal()" class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline">
+                                        View All Relays
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Company Info -->
+                    <div>
+                        <div class="mb-4">
+                            <img src="./shugur-logo-full.svg" alt="Shugur Network" class="h-6 mb-2">
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                            Build open, resilient tech for everyone.
+                        </p>
+                        <div class="flex space-x-4">
+                            <a href="https://shugur.com" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                Company
+                            </a>
+                            <a href="https://github.com/Shugur-Network" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Copyright -->
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-8">
+                    <p class="text-xs text-gray-500 dark:text-gray-500 text-center">
+                        © <span id="current-year">2025</span> Shugur Network. Build open, resilient tech for everyone.
+                    </p>
+                </div>
+            </div>
+        </footer>
+        </div>
+    </div>
+
+    <!-- All Relays Modal -->
+    <div id="all-relays-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">All Relay Nodes</h2>
+                <button onclick="closeAllRelaysModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
-                    Refresh
                 </button>
             </div>
-            <div class="grid md:grid-cols-4 gap-4">
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4" data-node="shu01">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-semibold">shu01.shugur.net</h3>
-                        <div class="w-3 h-3 bg-green-500 rounded-full pulse-green"></div>
-                    </div>
-                    <div class="text-xs text-gray-400 space-y-1">
-                        <div>Status: <span class="text-green-400" data-node-status>Online</span></div>
-                        <div>Events: <span class="text-blue-400" data-node-events>2.1M</span></div>
-                        <div>Connections: <span class="text-yellow-400" data-node-connections>142</span></div>
-                        <div>NIPs: <span class="text-purple-400">25</span></div>
-                        <div class="font-mono text-xs">US-East-1 • CockroachDB</div>
-                        <div class="text-xs">
-                            <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                            wss://shu01.shugur.net
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-semibold">shu02.shugur.net</h3>
-                        <div class="w-3 h-3 bg-green-500 rounded-full pulse-green"></div>
-                    </div>
-                    <div class="text-xs text-gray-400 space-y-1">
-                        <div>Status: <span class="text-green-400">Online</span></div>
-                        <div>Events: <span class="text-blue-400">1.8M</span></div>
-                        <div>Connections: <span class="text-yellow-400">98</span></div>
-                        <div>NIPs: <span class="text-purple-400">25</span></div>
-                        <div class="font-mono text-xs">US-West-1 • CockroachDB</div>
-                        <div class="text-xs">
-                            <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                            wss://shu02.shugur.net
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-semibold">shu03.shugur.net</h3>
-                        <div class="w-3 h-3 bg-green-500 rounded-full pulse-green"></div>
-                    </div>
-                    <div class="text-xs text-gray-400 space-y-1">
-                        <div>Status: <span class="text-green-400">Online</span></div>
-                        <div>Events: <span class="text-blue-400">2.3M</span></div>
-                        <div>Connections: <span class="text-yellow-400">203</span></div>
-                        <div>NIPs: <span class="text-purple-400">25</span></div>
-                        <div class="font-mono text-xs">EU-Central-1 • CockroachDB</div>
-                        <div class="text-xs">
-                            <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                            wss://shu03.shugur.net
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-semibold">shu04.shugur.net</h3>
-                        <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    </div>
-                    <div class="text-xs text-gray-400 space-y-1">
-                        <div>Status: <span class="text-yellow-400">Maintenance</span></div>
-                        <div>Events: <span class="text-gray-500">0</span></div>
-                        <div>Connections: <span class="text-gray-500">0</span></div>
-                        <div>NIPs: <span class="text-gray-500">--</span></div>
-                        <div class="font-mono text-xs">Asia-Pacific-1 • CockroachDB</div>
-                        <div class="text-xs">
-                            <span class="inline-block w-2 h-2 bg-gray-500 rounded-full mr-1"></span>
-                            wss://shu04.shugur.net
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Nostr Protocol Information -->
-        <div class="mb-8">
-            <h2 class="text-2xl font-display mb-6">Nostr Protocol Support</h2>
-            <div class="grid lg:grid-cols-3 gap-6">
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
-                    <h3 class="font-display text-lg mb-4 flex items-center">
-                        <svg class="h-5 w-5 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        Supported NIPs
-                    </h3>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span>Core Protocol (NIP-01)</span>
-                            <span class="text-green-400">✓</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Contact Lists (NIP-02)</span>
-                            <span class="text-green-400">✓</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Encrypted DMs (NIP-04/17)</span>
-                            <span class="text-green-400">✓</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Event Deletion (NIP-09)</span>
-                            <span class="text-green-400">✓</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Search Capability (NIP-50)</span>
-                            <span class="text-green-400">✓</span>
-                        </div>
-                        <div class="text-center mt-4">
-                            <span class="text-primary font-mono text-lg">25 NIPs</span>
-                            <div class="text-xs text-gray-400">Total Supported</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
-                    <h3 class="font-display text-lg mb-4 flex items-center">
-                        <svg class="h-5 w-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                        </svg>
-                        Relay Limits
-                    </h3>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span>Max Message Length</span>
-                            <span class="text-blue-400">2048 chars</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Max Subscriptions</span>
-                            <span class="text-blue-400">100</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Max Event Tags</span>
-                            <span class="text-blue-400">100</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Auth Required</span>
-                            <span class="text-gray-400">No</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Payment Required</span>
-                            <span class="text-gray-400">No</span>
-                        </div>
-                        <div class="text-center mt-4">
-                            <span class="text-green-400 font-mono text-lg">Free</span>
-                            <div class="text-xs text-gray-400">Public Access</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
-                    <h3 class="font-display text-lg mb-4 flex items-center">
-                        <svg class="h-5 w-5 text-purple-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                        Performance
-                    </h3>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span>Software</span>
-                            <span class="text-purple-400" data-metric="software">Shugur v2.0.0</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Language</span>
-                            <span class="text-purple-400">Go</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Database</span>
-                            <span class="text-purple-400">CockroachDB</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Rate Limiting</span>
-                            <span class="text-green-400">Enabled</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Clustering</span>
-                            <span class="text-green-400">Distributed</span>
-                        </div>
-                        <div class="text-center mt-4">
-                            <span class="text-yellow-400 font-mono text-lg">< 100ms</span>
-                            <div class="text-xs text-gray-400">Avg Response</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Network Overview -->
-        <div class="grid lg:grid-cols-2 gap-8 mb-8">
-            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
-                <h3 class="font-display text-lg mb-4">Network Performance</h3>
-                <div class="space-y-4">
-                                            <div class="flex justify-between items-center">
-                            <span class="text-sm">Total WebSocket Connections</span>
-                            <span class="text-primary font-mono" data-metric="ws-connections">443</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm">Events Processed/sec</span>
-                            <span class="text-green-400 font-mono" data-metric="events-per-second">1,247</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm">Total Stored Events</span>
-                            <span class="text-blue-400 font-mono" data-metric="total-events">6.2M</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm">Average Response Time</span>
-                            <span class="text-yellow-400 font-mono" data-metric="response-time">23ms</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm">Network Uptime (30d)</span>
-                            <span class="text-green-400 font-mono" data-metric="uptime">99.94%</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm">Database Sync Status</span>
-                            <span class="text-green-400 font-mono" data-metric="db-sync">Synced</span>
-                        </div>
-                </div>
-            </div>
-
-            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
-                <h3 class="font-display text-lg mb-4">Load Balancer</h3>
-                <div class="space-y-3">
-                    <div class="text-sm text-gray-400 mb-2">Primary Endpoint</div>
-                    <div class="font-mono text-primary bg-gray-800 px-3 py-2 rounded text-sm">
-                        wss://relay.shugur.net
-                    </div>
-                    <div class="text-xs text-gray-500">
-                        Automatically routes to healthy nodes:<br>
-                        shu01, shu02, shu03 (shu04 in maintenance)
-                    </div>
-                    <div class="pt-2">
-                        <div class="text-xs text-gray-400 mb-1">Traffic Distribution</div>
-                        <div class="space-y-1">
-                            <div class="flex items-center gap-2">
-                                <div class="w-20 bg-gray-800 rounded-full h-2">
-                                    <div class="bg-green-500 h-2 rounded-full" style="width: 32%"></div>
-                                </div>
-                                <span class="text-xs">shu01: 32%</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="w-20 bg-gray-800 rounded-full h-2">
-                                    <div class="bg-blue-500 h-2 rounded-full" style="width: 22%"></div>
-                                </div>
-                                <span class="text-xs">shu02: 22%</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="w-20 bg-gray-800 rounded-full h-2">
-                                    <div class="bg-purple-500 h-2 rounded-full" style="width: 46%"></div>
-                                </div>
-                                <span class="text-xs">shu03: 46%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Real-time Event Statistics -->
-        <div class="mb-8">
-            <h3 class="font-display text-lg mb-4">Real-time Event Activity</h3>
-            <div class="grid md:grid-cols-6 gap-4">
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
-                    <div class="text-2xl font-mono text-primary mb-1" data-event-kind="1">1,247</div>
-                    <div class="text-xs text-gray-400">Kind 1 (Notes)</div>
-                    <div class="text-xs text-green-400">+12/min</div>
-                </div>
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
-                    <div class="text-2xl font-mono text-blue-400 mb-1" data-event-kind="3">342</div>
-                    <div class="text-xs text-gray-400">Kind 3 (Contacts)</div>
-                    <div class="text-xs text-green-400">+3/min</div>
-                </div>
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
-                    <div class="text-2xl font-mono text-purple-400 mb-1" data-event-kind="4">89</div>
-                    <div class="text-xs text-gray-400">Kind 4 (DMs)</div>
-                    <div class="text-xs text-green-400">+8/min</div>
-                </div>
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
-                    <div class="text-2xl font-mono text-yellow-400 mb-1" data-event-kind="7">156</div>
-                    <div class="text-xs text-gray-400">Kind 7 (Reactions)</div>
-                    <div class="text-xs text-green-400">+15/min</div>
-                </div>
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
-                    <div class="text-2xl font-mono text-green-400 mb-1" data-event-kind="30023">23</div>
-                    <div class="text-xs text-gray-400">Kind 30023 (Articles)</div>
-                    <div class="text-xs text-green-400">+1/min</div>
-                </div>
-                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
-                    <div class="text-2xl font-mono text-red-400 mb-1" data-event-kind="other">7</div>
-                    <div class="text-xs text-gray-400">Other Kinds</div>
-                    <div class="text-xs text-green-400">+2/min</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="mb-8">
-            <h3 class="font-display text-lg mb-4">Quick Access</h3>
-            <div class="grid md:grid-cols-3 gap-4">
-                <a href="https://developers.shugur.net" 
-                   class="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-primary transition-colors group">
-                    <div class="flex items-center gap-3">
-                        <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-                        </svg>
-                        <div>
-                            <div class="font-semibold group-hover:text-primary">Developer Hub</div>
-                            <div class="text-xs text-gray-400">APIs, docs, tools</div>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="https://status.shugur.net" 
-                   class="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-primary transition-colors group">
-                    <div class="flex items-center gap-3">
-                        <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                        <div>
-                            <div class="font-semibold group-hover:text-primary">Status Page</div>
-                            <div class="text-xs text-gray-400">Incidents, uptime</div>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="https://docs.relay.shugur.net" 
-                   class="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-primary transition-colors group">
-                    <div class="flex items-center gap-3">
-                        <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                        </svg>
-                        <div>
-                            <div class="font-semibold group-hover:text-primary">Documentation</div>
-                            <div class="text-xs text-gray-400">Guides, API reference</div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <!-- Connection Instructions -->
-        <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
-            <h3 class="font-display text-lg mb-4">Connect to Shugur Relay Network</h3>
-            <div class="grid md:grid-cols-2 gap-6">
-                <div>
-                    <h4 class="font-semibold mb-2 text-sm flex items-center">
-                        <svg class="h-4 w-4 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                        Primary Endpoint (Load Balanced)
-                    </h4>
-                    <div class="bg-gray-800 rounded px-3 py-2 font-mono text-sm text-primary mb-2">
-                        wss://relay.shugur.net
-                    </div>
-                    <p class="text-xs text-gray-400 mb-3">Automatically routes to the best available node with intelligent failover.</p>
-                    
-                    <h4 class="font-semibold mb-2 text-sm">Features</h4>
-                    <div class="space-y-1 text-xs">
-                        <div class="flex items-center">
-                            <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                            25 supported NIPs
-                        </div>
-                        <div class="flex items-center">
-                            <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                            CockroachDB distributed storage
-                        </div>
-                        <div class="flex items-center">
-                            <span class="inline-block w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-                            Real-time event streaming
-                        </div>
-                        <div class="flex items-center">
-                            <span class="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
-                            Rate limiting & abuse protection
-                        </div>
-                    </div>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold mb-2 text-sm flex items-center">
-                        <svg class="h-4 w-4 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
-                        </svg>
-                        Direct Node Access
-                    </h4>
-                    <div class="space-y-1 text-xs font-mono">
-                        <div class="flex items-center justify-between">
-                            <span class="text-green-400">wss://shu01.shugur.net</span>
-                            <span class="text-gray-400">US-East</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-green-400">wss://shu02.shugur.net</span>
-                            <span class="text-gray-400">US-West</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-green-400">wss://shu03.shugur.net</span>
-                            <span class="text-gray-400">EU-Central</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-500">wss://shu04.shugur.net</span>
-                            <span class="text-yellow-400">Maintenance</span>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 p-3 bg-gray-800 rounded text-xs">
-                        <div class="font-semibold mb-2 text-primary">Relay Information (NIP-11)</div>
-                        <div class="space-y-1 font-mono">
-                            <div>Name: shugur-relay</div>
-                            <div>Software: shugur v2.0.0</div>
-                            <div>Contact: support@shugur.com</div>
-                            <div>Pubkey: npub1...</div>
-                        </div>
-                    </div>
+            <div class="p-6 overflow-auto max-h-[calc(90vh-120px)]">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Node</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Endpoint</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Connections</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Requests</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Response Time</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Uptime</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Load</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-relays-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <!-- Table rows will be populated dynamically -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <footer class="border-t border-gray-800 mt-12">
-        <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between text-sm text-gray-400">
-            <div>© 2025 Shugur Network. Building censorship-resistant communication infrastructure.</div>
-            <div class="flex gap-4">
-                <a href="https://github.com/Shugur-Network/relay" class="hover:text-primary">GitHub</a>
-                <a href="https://docs.relay.shugur.net" class="hover:text-primary">Docs</a>
-                <a href="https://shugur.com" class="hover:text-primary">Company</a>
-                <a href="https://nostr.com" class="hover:text-primary">About Nostr</a>
-            </div>
-        </div>
-    </footer>
-
-    <script src="dashboard.js"></script>
-    <script>
-        // Legacy fallback - this will be replaced by dashboard.js
-        // Auto-refresh status every 30 seconds
-        setInterval(() => {
-            // Simulate real-time updates
-            updateEventCounters();
-            updateConnectionCounts();
-            console.log('Refreshing relay status...');
-        }, 30000);
-
-        function updateEventCounters() {
-            // Simulate incrementing event counters
-            const counters = document.querySelectorAll('.text-2xl.font-mono');
-            counters.forEach(counter => {
-                if (counter.textContent && !isNaN(parseInt(counter.textContent.replace(/,/g, '')))) {
-                    let current = parseInt(counter.textContent.replace(/,/g, ''));
-                    let increment = Math.floor(Math.random() * 5) + 1;
-                    counter.textContent = (current + increment).toLocaleString();
-                }
-            });
-        }
-
-        function updateConnectionCounts() {
-            // Simulate small fluctuations in connection counts
-            const connectionElements = document.querySelectorAll('[class*="text-yellow-400"]');
-            connectionElements.forEach(element => {
-                if (element.textContent && !isNaN(parseInt(element.textContent))) {
-                    let current = parseInt(element.textContent);
-                    let change = Math.floor(Math.random() * 10) - 5; // -5 to +5
-                    let newValue = Math.max(0, current + change);
-                    element.textContent = newValue.toString();
-                }
-            });
-        }
-
-        // Add copy to clipboard functionality for relay URLs
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                console.log('Copied to clipboard:', text);
-                // Show toast notification (you could add a toast component)
-            });
-        }
-
-        // Add click handlers for relay URLs
-        document.addEventListener('DOMContentLoaded', function() {
-            const relayUrls = document.querySelectorAll('.font-mono');
-            relayUrls.forEach(url => {
-                if (url.textContent.startsWith('wss://')) {
-                    url.style.cursor = 'pointer';
-                    url.title = 'Click to copy';
-                    url.addEventListener('click', () => {
-                        copyToClipboard(url.textContent);
-                    });
-                }
-            });
-        });
-    </script>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>
