@@ -596,9 +596,16 @@ async function fetchRelayData() {
             relay.name = node.name // Always use the hostname instead of API name
             relay.relayId = data.relay_id || node.id
             
-            // Measure real Nostr response time (client-side for accuracy)
-            relay.responseTime = await measureNostrResponseTime(node.url)
-            console.log(`📱 Response time for ${node.id}: ${relay.responseTime}ms`)
+            // Get cached response time from serverless function
+            const cachedResponseTime = await getCachedResponseTime(node.id)
+            if (cachedResponseTime !== null) {
+                relay.responseTime = cachedResponseTime
+                console.log(`⚡ Cached response time for ${node.id}: ${relay.responseTime}ms`)
+            } else {
+                // Fallback to client-side measurement if cache is empty
+                relay.responseTime = await measureNostrResponseTime(node.url)
+                console.log(`📱 Fallback response time for ${node.id}: ${relay.responseTime}ms`)
+            }
             
             // Log detailed diagnostics
             logResponseTimeDiagnostics(node.id, relay.responseTime, 'WebSocket')
@@ -1113,8 +1120,39 @@ function cleanupConnectionPool() {
     console.log('Connection pool cleaned up')
 }
 
-// Client-side response time measurement is more accurate than serverless
-// (serverless has 700-900ms overhead vs 100-150ms actual response times)
+// Function to get cached response times from serverless function
+async function getCachedResponseTime(relayId) {
+    try {
+        const response = await fetch('/.netlify/functions/measure-response-times', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            signal: AbortSignal.timeout(5000)
+        });
+        
+        if (!response.ok) {
+            console.warn(`Failed to fetch cached response times: ${response.status}`);
+            return null;
+        }
+        
+        const result = await response.json();
+        
+        if (result.success && result.data?.measurements?.[relayId]?.responseTime) {
+            const measurement = result.data.measurements[relayId];
+            const age = result.cacheAge;
+            console.log(`📦 Found cached response time for ${relayId}: ${measurement.responseTime}ms (age: ${age})`);
+            return measurement.responseTime;
+        }
+        
+        console.log(`📦 No cached response time for ${relayId}`);
+        return null;
+        
+    } catch (error) {
+        console.warn(`Failed to get cached response time for ${relayId}:`, error.message);
+        return null;
+    }
+}
+
+// Client-side response time measurement for fallback when cache is empty
 
 // Enhanced response time measurement with connection reuse
 async function measureNostrResponseTimeWithPool(relayId) {
