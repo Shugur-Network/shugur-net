@@ -1,126 +1,99 @@
-// Netlify function to proxy geolocation requests and solve CORS issues
+// Simple geolocation function
 exports.handler = async (event, context) => {
-  // Set CORS headers
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  }
-
-  // Handle preflight requests
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: '',
-    }
-  }
-
-  // Only allow GET requests
-  if (event.httpMethod !== 'GET') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    }
-  }
-
-  // Extract IP from query parameters
-  const ip = event.queryStringParameters?.ip
-  if (!ip) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ error: 'IP address required' }),
-    }
-  }
-
-  try {
-    // Try multiple geolocation APIs
-    const geoAPIs = [
-      {
-        name: 'ipapi.co',
-        url: `https://ipapi.co/${ip}/json/`,
-        formatResponse: (data) => {
-          if (data.error) throw new Error(data.reason || 'ipapi.co error')
-          const parts = []
-          if (data.city) parts.push(data.city)
-          if (data.country_name) parts.push(data.country_name)
-          return parts.length > 0 ? parts.join(', ') : null
-        }
-      },
-      {
-        name: 'ip-api.com',
-        url: `http://ip-api.com/json/${ip}?fields=status,message,country,regionName,city`,
-        formatResponse: (data) => {
-          if (data.status === 'fail') throw new Error(data.message || 'ip-api.com error')
-          const parts = []
-          if (data.city) parts.push(data.city)
-          if (data.country) parts.push(data.country)
-          return parts.length > 0 ? parts.join(', ') : null
-        }
-      },
-      {
-        name: 'ipinfo.io',
-        url: `https://ipinfo.io/${ip}/json`,
-        formatResponse: (data) => {
-          if (data.error) throw new Error(data.error.message || 'ipinfo.io error')
-          const parts = []
-          if (data.city) parts.push(data.city)
-          if (data.country) parts.push(data.country)
-          return parts.length > 0 ? parts.join(', ') : null
-        }
-      }
-    ]
-
-    // Try each API until one works
-    for (const api of geoAPIs) {
-      try {
-        const response = await fetch(api.url, {
-          headers: { 'Accept': 'application/json' },
-          signal: AbortSignal.timeout(8000)
-        })
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-        
-        const data = await response.json()
-        const location = api.formatResponse(data)
-        
-        if (location) {
-          return {
+    // Enable CORS
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+    };
+    
+    if (event.httpMethod === 'OPTIONS') {
+        return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ 
-              location,
-              source: api.name,
-              ip: ip
-            }),
-          }
+            body: ''
+        };
+    }
+    
+    try {
+        const { hostname } = JSON.parse(event.body || '{}');
+        
+        if (!hostname) {
+            return {
+                statusCode: 400,
+                headers: {
+                    ...headers,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ error: 'Hostname is required' })
+            };
         }
         
-      } catch (error) {
-        // Continue to next API
-      }
+        // Simple DNS resolution to get IP
+        const dns = require('dns').promises;
+        let ipAddress;
+        
+        try {
+            const addresses = await dns.resolve4(hostname);
+            ipAddress = addresses[0];
+        } catch (error) {
+            return {
+                statusCode: 500,
+                headers: {
+                    ...headers,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ error: 'Failed to resolve hostname' })
+            };
+        }
+        
+        // Get geolocation using free IP API
+        const response = await fetch(`http://ip-api.com/json/${ipAddress}`);
+        const geoData = await response.json();
+        
+        if (geoData.status !== 'success') {
+            return {
+                statusCode: 500,
+                headers: {
+                    ...headers,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ error: 'Failed to get geolocation' })
+            };
+        }
+        
+        const result = {
+            hostname,
+            ipAddress,
+            location: `${geoData.city}, ${geoData.country}`,
+            city: geoData.city,
+            country: geoData.country,
+            countryCode: geoData.countryCode,
+            region: geoData.regionName,
+            latitude: geoData.lat,
+            longitude: geoData.lon,
+            timezone: geoData.timezone,
+            isp: geoData.isp,
+            org: geoData.org
+        };
+        
+        return {
+            statusCode: 200,
+            headers: {
+                ...headers,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ success: true, data: result })
+        };
+        
+    } catch (error) {
+        return {
+            statusCode: 500,
+            headers: {
+                ...headers,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ error: error.message })
+        };
     }
-
-    // All APIs failed
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ 
-        error: 'All geolocation APIs failed',
-        fallback: true 
-      }),
-    }
-
-  } catch (error) {
-    console.error('Geolocation function error:', error)
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Internal server error' }),
-    }
-  }
-}
+};

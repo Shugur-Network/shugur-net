@@ -596,8 +596,9 @@ async function fetchRelayData() {
             relay.name = node.name // Always use the hostname instead of API name
             relay.relayId = data.relay_id || node.id
             
-            // Measure real Nostr response time
-            relay.responseTime = await measureNostrResponseTimeWithPool(node.id)
+            // Measure real Nostr response time using serverless function
+            const responseTimeResult = await measureResponseTimeServerless(node.url)
+            relay.responseTime = responseTimeResult?.responseTime || await measureNostrResponseTimeWithPool(node.id)
             
             // Log detailed diagnostics
             logResponseTimeDiagnostics(node.id, relay.responseTime, 'WebSocket')
@@ -1112,6 +1113,24 @@ function cleanupConnectionPool() {
     console.log('Connection pool cleaned up')
 }
 
+// Serverless response time measurement for better accuracy
+async function measureResponseTimeServerless(relayUrl) {
+    try {
+        const response = await fetch('/.netlify/functions/measure-response-time', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ relayUrl }),
+            signal: AbortSignal.timeout(10000)
+        });
+        
+        const result = await response.json();
+        return result.success ? result : null;
+    } catch (error) {
+        console.warn('Serverless response time measurement failed:', error);
+        return null;
+    }
+}
+
 // Enhanced response time measurement with connection reuse
 async function measureNostrResponseTimeWithPool(relayId) {
     const relay = state.relays.get(relayId)
@@ -1287,37 +1306,29 @@ async function getIPLocation(hostname) {
     }
     
     try {
-        // First resolve hostname to IP
-        const ipAddress = await resolveHostnameToIP(hostname)
+        // Use serverless function for geolocation
+        const response = await fetch('/.netlify/functions/geolocation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hostname }),
+            signal: AbortSignal.timeout(10000)
+        });
         
-        // Add a small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200))
+        const result = await response.json();
         
-        console.log(`Getting location for IP: ${ipAddress}`)
-        
-        // Try ipapi.co first (free tier: 1000 requests/month)
-        const response = await fetch(`https://ipapi.co/${ipAddress}/json/`, {
-            headers: { 'Accept': 'application/json' },
-            signal: AbortSignal.timeout(5000)
-        })
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+        if (!result.success) {
+            throw new Error(result.error || 'Geolocation failed');
         }
         
-        const data = await response.json()
-        console.log(`Location API response for ${ipAddress}:`, data)
+        const data = result.data;
+        console.log(`Location API response for ${hostname}:`, data)
         
         if (data.error) {
             throw new Error(data.reason || 'Location lookup failed')
         }
         
-        // Format the location nicely - city and country only
-        const parts = []
-        if (data.city) parts.push(data.city)
-        if (data.country_name) parts.push(data.country_name)
-        
-        const location = parts.length > 0 ? parts.join(', ') : 'Unknown Location'
+        // Use the location from serverless function (already formatted)
+        const location = data.location || 'Unknown Location'
         
         // Cache the result
         locationCache.set(hostname, location)

@@ -14,7 +14,8 @@
     "chart.js": "^4.4.0",
     "chartjs-adapter-date-fns": "^3.0.0",
     "date-fns": "^2.30.0",
-    "lucide": "^0.284.0"
+    "lucide": "^0.284.0",
+    "ws": "^8.14.0"
   },
   "devDependencies": {
     "vite": "^4.5.0",
