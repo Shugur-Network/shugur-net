@@ -402,7 +402,7 @@ function createRelayNodeElement(node) {
         <div class="flex items-start justify-between mb-4">
             <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">${nodeTitle}</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400" id="location-${node.id}">${node.location || 'Unknown Location'}</p>
+                <p class="text-xs text-gray-600 dark:text-gray-400" id="location-${node.id}">${node.location || 'Unknown Location'}</p>
             </div>
             <span class="status-badge ${statusBadgeClass}" id="status-${node.id}">${statusText}</span>
         </div>
