@@ -596,9 +596,9 @@ async function fetchRelayData() {
             relay.name = node.name // Always use the hostname instead of API name
             relay.relayId = data.relay_id || node.id
             
-            // Measure real Nostr response time using serverless function
-            const responseTimeResult = await measureResponseTimeServerless(node.url)
-            relay.responseTime = responseTimeResult?.responseTime || await measureNostrResponseTimeWithPool(node.id)
+            // Measure real Nostr response time (client-side for accuracy)
+            relay.responseTime = await measureNostrResponseTime(node.url)
+            console.log(`📱 Response time for ${node.id}: ${relay.responseTime}ms`)
             
             // Log detailed diagnostics
             logResponseTimeDiagnostics(node.id, relay.responseTime, 'WebSocket')
@@ -1113,23 +1113,8 @@ function cleanupConnectionPool() {
     console.log('Connection pool cleaned up')
 }
 
-// Serverless response time measurement for better accuracy
-async function measureResponseTimeServerless(relayUrl) {
-    try {
-        const response = await fetch('/.netlify/functions/measure-response-time', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ relayUrl }),
-            signal: AbortSignal.timeout(10000)
-        });
-        
-        const result = await response.json();
-        return result.success ? result : null;
-    } catch (error) {
-        console.warn('Serverless response time measurement failed:', error);
-        return null;
-    }
-}
+// Client-side response time measurement is more accurate than serverless
+// (serverless has 700-900ms overhead vs 100-150ms actual response times)
 
 // Enhanced response time measurement with connection reuse
 async function measureNostrResponseTimeWithPool(relayId) {
